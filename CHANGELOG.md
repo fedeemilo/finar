@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.4] — 2026-03-19
+
+### Cambiado
+- Semáforo: reemplazado emoji 🧠 por ícono `BrainCircuit` de Lucide React en el bloque de contexto
+- Semáforo: carga rápida con stale-while-revalidate — datos viejos se sirven instantáneo mientras el cron actualiza en segundo plano
+- Semáforo: Dólar CCL reemplazado por Dólar Blue (más relevante para el usuario común)
+- Semáforo: íconos tipográficos reemplazados por íconos Lucide React por activo
+- Análisis de mercado: migrado de `claude-opus-4-6` a `claude-sonnet-4-6` (cold start ~6-10s vs 30-40s)
+- Cache: TTL fresco 30 min + TTL stale 4 h; Vercel Cron cada 25 min mantiene caché caliente
+
+---
+
 ## [0.1.3] — 2026-03-19
 
 ### Corregido
