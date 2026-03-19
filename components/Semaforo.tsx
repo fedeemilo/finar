@@ -53,7 +53,7 @@ export function Semaforo() {
     return (
       <div className="space-y-3">
         <div className="h-4 w-3/4 bg-black/5 dark:bg-white/5 rounded-full animate-pulse mb-5" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
           {Array.from({ length: 6 }).map((_, i) => (
             <AssetCardSkeleton key={i} />
           ))}
@@ -77,7 +77,7 @@ export function Semaforo() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
         {assets?.map((asset) => (
           <AssetCard key={asset.id} data={asset} />
         ))}

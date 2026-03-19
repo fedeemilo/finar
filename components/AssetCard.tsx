@@ -104,14 +104,16 @@ export function AssetCard({ data }: { data: AssetCardData }) {
       {/* Expanded content */}
       <div
         className={`overflow-hidden transition-all duration-300 ease-in-out ${
-          expanded ? "max-h-48 opacity-100 mt-4" : "max-h-0 opacity-0"
+          expanded ? "max-h-60 opacity-100 mt-4" : "max-h-0 opacity-0"
         }`}
       >
         <div className={`border-t ${config.cardBorder} pt-4`}>
           <p className="text-xs text-gray-400 dark:text-white/40 uppercase tracking-wider mb-2 font-medium">
             ¿Por qué?
           </p>
-          <p className="text-gray-600 dark:text-white/70 text-sm leading-relaxed">{data.porque}</p>
+          <div className="max-h-36 overflow-y-auto pr-1">
+            <p className="text-gray-600 dark:text-white/70 text-sm leading-relaxed">{data.porque}</p>
+          </div>
         </div>
       </div>
     </button>

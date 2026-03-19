@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.3] — 2026-03-19
+
+### Corregido
+- Semáforo: al expandir una card, ya no estira la card adyacente en la misma fila (`items-start` en el grid)
+- Semáforo: texto expandido ya no se corta — contenedor con `max-h` ampliado y scroll interno estilizado
+
+---
+
 ## [0.1.2] — 2026-03-19
 
 ### Agregado
