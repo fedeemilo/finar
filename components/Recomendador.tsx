@@ -116,21 +116,20 @@ function downloadPDF(
 function Paywall({ ttl }: { ttl: number }) {
   const renewalTime = getRenewalTime(ttl);
   return (
-    <div className="rounded-2xl border border-white/5 bg-white/[0.03] backdrop-blur-sm p-8 text-center">
+    <div className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.03] backdrop-blur-sm p-8 text-center">
       <div className="text-4xl mb-4">🔒</div>
-      <h3 className="text-white font-bold text-lg mb-2">
+      <h3 className="text-gray-800 dark:text-white font-bold text-lg mb-2">
         Usaste tus 3 recomendaciones gratuitas
       </h3>
-      <p className="text-white/50 text-sm leading-relaxed mb-6 max-w-xs mx-auto">
+      <p className="text-gray-500 dark:text-white/50 text-sm leading-relaxed mb-6 max-w-xs mx-auto">
         {renewalTime ? (
-          <>Tus consultas se renuevan a las <span className="text-white/70 font-medium">{renewalTime}</span>.</>
-
+          <>Tus consultas se renuevan a las <span className="text-gray-700 dark:text-white/70 font-medium">{renewalTime}</span>.</>
         ) : (
           <>El plan gratuito incluye 3 consultas cada 12 horas.</>
         )}
       </p>
 
-      <p className="text-white/20 text-xs">
+      <p className="text-gray-300 dark:text-white/20 text-xs">
         Podés volver a consultar cuando se renueve el límite.
       </p>
     </div>
@@ -222,12 +221,12 @@ export function Recomendador() {
   // Skeleton mientras sincroniza
   if (!synced) {
     return (
-      <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-6 animate-pulse">
-        <div className="h-4 w-1/3 bg-white/10 rounded-full mb-6" />
+      <div className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.03] p-6 animate-pulse">
+        <div className="h-4 w-1/3 bg-black/10 dark:bg-white/10 rounded-full mb-6" />
         <div className="space-y-3">
-          <div className="h-10 bg-white/10 rounded-xl" />
-          <div className="h-10 bg-white/10 rounded-xl" />
-          <div className="h-12 bg-white/10 rounded-xl" />
+          <div className="h-10 bg-black/10 dark:bg-white/10 rounded-xl" />
+          <div className="h-10 bg-black/10 dark:bg-white/10 rounded-xl" />
+          <div className="h-12 bg-black/10 dark:bg-white/10 rounded-xl" />
         </div>
       </div>
     );
@@ -239,12 +238,12 @@ export function Recomendador() {
   // Vista de resultado
   if (result) {
     return (
-      <div className="rounded-2xl border border-white/5 bg-white/[0.03] backdrop-blur-sm p-6">
+      <div className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.03] backdrop-blur-sm p-6">
         <div className="mb-5">
-          <p className="text-white/90 font-medium leading-relaxed">{result.resumen}</p>
+          <p className="text-gray-800 dark:text-white/90 font-medium leading-relaxed">{result.resumen}</p>
           {result.advertencia && (
             <div className="mt-3 p-3 rounded-xl bg-amber-400/10 border border-amber-400/20">
-              <p className="text-amber-300 text-sm">⚠️ {result.advertencia}</p>
+              <p className="text-amber-600 dark:text-amber-300 text-sm">⚠️ {result.advertencia}</p>
             </div>
           )}
         </div>
@@ -255,31 +254,31 @@ export function Recomendador() {
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{item.emoji}</span>
-                  <span className="text-white/80 text-sm font-medium">{item.activo}</span>
+                  <span className="text-gray-700 dark:text-white/80 text-sm font-medium">{item.activo}</span>
                 </div>
-                <span className="text-emerald-400 font-semibold text-sm">{item.porcentaje}%</span>
+                <span className="text-emerald-500 dark:text-emerald-400 font-semibold text-sm">{item.porcentaje}%</span>
               </div>
-              <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
+              <div className="h-2 w-full rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-700 ease-out"
                   style={{ width: `${item.porcentaje}%`, background: "linear-gradient(90deg, #00c896, #00e6aa)" }}
                 />
               </div>
-              <p className="text-white/40 text-xs mt-1.5">{item.descripcion}</p>
+              <p className="text-gray-400 dark:text-white/40 text-xs mt-1.5">{item.descripcion}</p>
             </div>
           ))}
         </div>
 
         {/* Uses left badge */}
         {remaining > 0 && (
-          <p className="text-center text-white/30 text-xs mb-4">
+          <p className="text-center text-gray-400 dark:text-white/30 text-xs mb-4">
             {remaining === 1 ? (
-              <>Te queda <span className="text-white/50 font-medium">1 consulta</span></>
+              <>Te queda <span className="text-gray-500 dark:text-white/50 font-medium">1 consulta</span></>
             ) : (
-              <>Te quedan <span className="text-white/50 font-medium">{remaining} consultas</span></>
+              <>Te quedan <span className="text-gray-500 dark:text-white/50 font-medium">{remaining} consultas</span></>
             )}
             {ttl > 0 && (
-              <span className="text-white/20"> · se renueva a las {getRenewalTime(ttl)}</span>
+              <span className="text-gray-300 dark:text-white/20"> · se renueva a las {getRenewalTime(ttl)}</span>
             )}
           </p>
         )}
@@ -288,13 +287,13 @@ export function Recomendador() {
           <button
             onClick={handleReset}
             disabled={remaining === 0}
-            className="flex-1 py-3 rounded-xl border border-white/10 text-white/70 text-sm font-medium hover:bg-white/5 hover:border-white/20 transition-all active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex-1 py-3 rounded-xl border border-black/10 dark:border-white/10 text-gray-600 dark:text-white/70 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/5 hover:border-black/20 dark:hover:border-white/20 transition-all active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             ← Calcular de nuevo
           </button>
           <button
             onClick={() => downloadPDF(result, amount, currency, riskProfile!)}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-400/10 border border-emerald-400/20 text-emerald-400 text-sm font-medium hover:bg-emerald-400/20 transition-all active:scale-[0.97]"
+            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-400/10 border border-emerald-400/20 text-emerald-600 dark:text-emerald-400 text-sm font-medium hover:bg-emerald-400/20 transition-all active:scale-[0.97]"
           >
             <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
               <path d="M7.5 1v9m0 0L4.5 7m3 3L10.5 7M2 13h11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -308,14 +307,14 @@ export function Recomendador() {
 
   // Wizard
   return (
-    <div className="rounded-2xl border border-white/5 bg-white/[0.03] backdrop-blur-sm p-6">
+    <div className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.03] backdrop-blur-sm p-6">
       {/* Uses indicator */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex gap-2">
           {[1, 2].map((s) => (
             <div
               key={s}
-              className={`h-1 w-10 rounded-full transition-all duration-300 ${s <= step ? "bg-emerald-400" : "bg-white/10"}`}
+              className={`h-1 w-10 rounded-full transition-all duration-300 ${s <= step ? "bg-emerald-400" : "bg-black/10 dark:bg-white/10"}`}
             />
           ))}
         </div>
@@ -323,13 +322,13 @@ export function Recomendador() {
           {Array.from({ length: FREE_LIMIT }).map((_, i) => (
             <span
               key={i}
-              className={`w-2 h-2 rounded-full transition-all ${i < uses ? "bg-white/15" : "bg-emerald-400/70"}`}
+              className={`w-2 h-2 rounded-full transition-all ${i < uses ? "bg-black/15 dark:bg-white/15" : "bg-emerald-400/70"}`}
             />
           ))}
-          <span className="text-white/30 text-xs ml-1">
+          <span className="text-gray-400 dark:text-white/30 text-xs ml-1">
             {remaining === 1 ? "Te queda 1 consulta" : `Te quedan ${remaining}`}
             {ttl > 0 && (
-              <span className="text-white/20">
+              <span className="text-gray-300 dark:text-white/20">
                 {" · "}renueva a las {getRenewalTime(ttl)}
               </span>
             )}
@@ -339,8 +338,8 @@ export function Recomendador() {
 
       {step === 1 && (
         <form onSubmit={handleAmountSubmit}>
-          <h3 className="text-white/90 font-semibold text-lg mb-1">¿Cuánto tenés para invertir?</h3>
-          <p className="text-white/40 text-sm mb-5">Ingresá el monto y la moneda</p>
+          <h3 className="text-gray-800 dark:text-white/90 font-semibold text-lg mb-1">¿Cuánto tenés para invertir?</h3>
+          <p className="text-gray-400 dark:text-white/40 text-sm mb-5">Ingresá el monto y la moneda</p>
 
           <div className="flex gap-2 mb-4">
             {(["ARS", "USD"] as Currency[]).map((c) => (
@@ -348,7 +347,7 @@ export function Recomendador() {
                 key={c}
                 type="button"
                 onClick={() => setCurrency(c)}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all active:scale-95 ${currency === c ? "bg-emerald-400 text-black" : "bg-white/5 text-white/50 hover:bg-white/10"}`}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all active:scale-95 ${currency === c ? "bg-emerald-400 text-black" : "bg-black/5 dark:bg-white/5 text-gray-500 dark:text-white/50 hover:bg-black/10 dark:hover:bg-white/10"}`}
               >
                 {c === "ARS" ? "🇦🇷 Pesos" : "🇺🇸 Dólares"}
               </button>
@@ -356,7 +355,7 @@ export function Recomendador() {
           </div>
 
           <div className="relative mb-5">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 text-lg font-medium">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/40 text-lg font-medium">
               {currency === "ARS" ? "$" : "USD"}
             </span>
             <input
@@ -365,7 +364,7 @@ export function Recomendador() {
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0"
               min="1"
-              className="w-full bg-white/5 border border-white/10 rounded-xl pl-14 pr-4 py-4 text-white text-xl font-semibold placeholder-white/20 focus:outline-none focus:border-emerald-400/50 transition-colors"
+              className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl pl-14 pr-4 py-4 text-gray-800 dark:text-white text-xl font-semibold placeholder-gray-300 dark:placeholder-white/20 focus:outline-none focus:border-emerald-500/50 dark:focus:border-emerald-400/50 transition-colors"
             />
           </div>
 
@@ -381,8 +380,8 @@ export function Recomendador() {
 
       {step === 2 && (
         <div>
-          <h3 className="text-white/90 font-semibold text-lg mb-1">¿Cuál es tu perfil?</h3>
-          <p className="text-white/40 text-sm mb-5">
+          <h3 className="text-gray-800 dark:text-white/90 font-semibold text-lg mb-1">¿Cuál es tu perfil?</h3>
+          <p className="text-gray-400 dark:text-white/40 text-sm mb-5">
             {currency === "ARS" ? "$" : "USD"} {Number(amount).toLocaleString("es-AR")} {currency}
           </p>
 
@@ -391,26 +390,26 @@ export function Recomendador() {
               <button
                 key={profile.id}
                 onClick={() => setRiskProfile(profile.id)}
-                className={`w-full text-left p-4 rounded-xl border transition-all active:scale-[0.98] ${riskProfile === profile.id ? "border-emerald-400/50 bg-emerald-400/10" : "border-white/10 bg-white/[0.02] hover:bg-white/[0.05]"}`}
+                className={`w-full text-left p-4 rounded-xl border transition-all active:scale-[0.98] ${riskProfile === profile.id ? "border-emerald-400/50 bg-emerald-400/10" : "border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] hover:bg-black/[0.05] dark:hover:bg-white/[0.05]"}`}
               >
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">{profile.emoji}</span>
                   <div>
-                    <p className="text-white/90 text-sm font-medium">{profile.label}</p>
-                    <p className="text-white/40 text-xs">{profile.sublabel}</p>
+                    <p className="text-gray-800 dark:text-white/90 text-sm font-medium">{profile.label}</p>
+                    <p className="text-gray-400 dark:text-white/40 text-xs">{profile.sublabel}</p>
                   </div>
-                  {riskProfile === profile.id && <span className="ml-auto text-emerald-400">✓</span>}
+                  {riskProfile === profile.id && <span className="ml-auto text-emerald-500 dark:text-emerald-400">✓</span>}
                 </div>
               </button>
             ))}
           </div>
 
-          {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
+          {error && <p className="text-red-500 dark:text-red-400 text-sm mb-3">{error}</p>}
 
           <div className="flex gap-3">
             <button
               onClick={() => setStep(1)}
-              className="py-4 px-5 rounded-xl border border-white/10 text-white/50 hover:text-white/80 hover:border-white/20 transition-all text-sm"
+              className="py-4 px-5 rounded-xl border border-black/10 dark:border-white/10 text-gray-500 dark:text-white/50 hover:text-gray-700 dark:hover:text-white/80 hover:border-black/20 dark:hover:border-white/20 transition-all text-sm"
             >
               ← Volver
             </button>

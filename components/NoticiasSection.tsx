@@ -28,8 +28,8 @@ export function NoticiasSection() {
 
   if (!noticias || noticias.length === 0) {
     return (
-      <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-8 text-center">
-        <p className="text-white/40">No hay noticias disponibles ahora.</p>
+      <div className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.03] p-8 text-center">
+        <p className="text-gray-400 dark:text-white/40">No hay noticias disponibles ahora.</p>
       </div>
     );
   }

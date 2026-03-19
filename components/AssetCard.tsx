@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import { GlosarioTooltip } from "./GlosarioTooltip";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, type LucideIcon } from "lucide-react";
 
 export type SemaforoStatus = "green" | "yellow" | "red";
 
 export interface AssetCardData {
   id: string;
   nombre: string;
-  icono: string;
+  icono: LucideIcon;
   status: SemaforoStatus;
   veredicto: string;
   porque: string;
@@ -50,11 +50,13 @@ export function AssetCard({ data }: { data: AssetCardData }) {
   return (
     <button
       onClick={() => setExpanded(!expanded)}
-      className={`w-full text-left rounded-2xl border bg-white/[0.03] backdrop-blur-sm p-5 transition-all duration-300 hover:bg-white/[0.06] active:scale-[0.98] ${config.cardBorder}`}
+      className={`w-full text-left rounded-2xl border bg-black/[0.04] dark:bg-white/[0.03] backdrop-blur-sm p-5 transition-all duration-300 hover:bg-black/[0.07] dark:hover:bg-white/[0.06] active:scale-[0.98] ${config.cardBorder}`}
     >
       <div className="flex items-start gap-4">
         {/* Icon */}
-        <div className="text-3xl flex-shrink-0 mt-0.5">{data.icono}</div>
+        <div className="flex-shrink-0 mt-0.5 p-2 rounded-xl bg-black/5 dark:bg-white/5">
+          <data.icono size={22} className="text-gray-500 dark:text-white/50" strokeWidth={1.75} />
+        </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
@@ -74,7 +76,7 @@ export function AssetCard({ data }: { data: AssetCardData }) {
           </div>
 
           {/* Name */}
-          <div className="text-white/90 font-semibold text-base mb-1">
+          <div className="text-gray-800 dark:text-white/90 font-semibold text-base mb-1">
             {data.glosarioTerm ? (
               <GlosarioTooltip term={data.glosarioTerm}>
                 {data.nombre}
@@ -85,14 +87,14 @@ export function AssetCard({ data }: { data: AssetCardData }) {
           </div>
 
           {/* Veredicto */}
-          <p className="text-white/60 text-sm leading-relaxed">
+          <p className="text-gray-500 dark:text-white/60 text-sm leading-relaxed">
             {data.veredicto}
           </p>
         </div>
 
         {/* Chevron */}
         <ChevronDown
-          className={`flex-shrink-0 mt-1 text-white/30 transition-transform duration-300 ${
+          className={`flex-shrink-0 mt-1 text-gray-300 dark:text-white/30 transition-transform duration-300 ${
             expanded ? "rotate-180" : ""
           }`}
           size={18}
@@ -106,10 +108,10 @@ export function AssetCard({ data }: { data: AssetCardData }) {
         }`}
       >
         <div className={`border-t ${config.cardBorder} pt-4`}>
-          <p className="text-xs text-white/40 uppercase tracking-wider mb-2 font-medium">
+          <p className="text-xs text-gray-400 dark:text-white/40 uppercase tracking-wider mb-2 font-medium">
             ¿Por qué?
           </p>
-          <p className="text-white/70 text-sm leading-relaxed">{data.porque}</p>
+          <p className="text-gray-600 dark:text-white/70 text-sm leading-relaxed">{data.porque}</p>
         </div>
       </div>
     </button>
@@ -118,14 +120,14 @@ export function AssetCard({ data }: { data: AssetCardData }) {
 
 export function AssetCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-5 animate-pulse">
+    <div className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.04] dark:bg-white/[0.03] p-5 animate-pulse">
       <div className="flex items-start gap-4">
-        <div className="w-8 h-8 bg-white/10 rounded-lg flex-shrink-0" />
+        <div className="w-8 h-8 bg-black/10 dark:bg-white/10 rounded-lg flex-shrink-0" />
         <div className="flex-1 space-y-2">
-          <div className="h-2.5 bg-white/10 rounded-full w-20" />
-          <div className="h-4 bg-white/10 rounded-full w-32" />
-          <div className="h-3 bg-white/10 rounded-full w-full" />
-          <div className="h-3 bg-white/10 rounded-full w-4/5" />
+          <div className="h-2.5 bg-black/10 dark:bg-white/10 rounded-full w-20" />
+          <div className="h-4 bg-black/10 dark:bg-white/10 rounded-full w-32" />
+          <div className="h-3 bg-black/10 dark:bg-white/10 rounded-full w-full" />
+          <div className="h-3 bg-black/10 dark:bg-white/10 rounded-full w-4/5" />
         </div>
       </div>
     </div>

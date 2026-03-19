@@ -21,7 +21,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
+      <head>
+        {/* Prevent FOUC: apply theme class before React hydrates */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                var saved = localStorage.getItem('theme');
+                var system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                var theme = saved || system;
+                if (theme === 'dark') document.documentElement.classList.add('dark');
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${plusJakarta.variable} font-sans antialiased`}
         style={{ fontFamily: "var(--font-sans), sans-serif" }}

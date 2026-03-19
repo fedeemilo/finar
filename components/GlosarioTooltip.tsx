@@ -8,6 +8,7 @@ import {
 
 const GLOSARIO: Record<string, string> = {
   MEP: "Dólar MEP (Mercado Electrónico de Pagos): comprás bonos en pesos y los vendés en dólares. Es legal y sin límite de monto.",
+  Blue: "Dólar blue: el dólar informal que se negocia fuera del sistema bancario oficial. Su precio lo fija el mercado libre y suele ser mayor que el dólar oficial.",
   CCL: "Dólar CCL (Contado con Liquidación): similar al MEP pero te permite sacar los dólares al exterior. También es legal.",
   CEDEAR:
     "CEDEARs: certificados que representan acciones extranjeras (como Apple o Google) pero que comprás en pesos desde Argentina.",
@@ -45,7 +46,7 @@ export function GlosarioTooltip({ term, children }: GlosarioTooltipProps) {
         <span className="text-emerald-400 text-xs ml-0.5">?</span>
       </TooltipTrigger>
       <TooltipContent
-        className="max-w-xs bg-[#13131a] border border-white/10 text-white/90 text-sm p-3"
+        className="max-w-xs bg-white dark:bg-[#13131a] border border-black/10 dark:border-white/10 text-gray-800 dark:text-white/90 text-sm p-3"
         side="top"
       >
         {definition}

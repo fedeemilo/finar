@@ -35,11 +35,11 @@ DÓLAR MEP:
 - Rojo: cepo muy estricto, riesgo de intervención oficial, expectativas de baja de brecha inminente
 - Siempre considerar: noticias sobre política cambiaria, FMI, reservas del BCRA
 
-DÓLAR CCL:
-- Verde: útil si necesitás dólares en el exterior, brecha moderada
-- Amarillo: brecha muy alta sugiere riesgo de overshooting, usar con precaución
-- Rojo: restricciones fuertes al CCL, costos operativos muy altos
-- Diferencia clave vs MEP: CCL permite sacar plata del país, implica más riesgo regulatorio
+DÓLAR BLUE:
+- Verde: brecha con el oficial manejable (<80%), mercado informal activo, buena opción para dolarizarse rápido
+- Amarillo: brecha alta (>80%) o mucha volatilidad, riesgo de corrección brusca
+- Rojo: brecha muy alta con señales de intervención oficial, o brecha cayendo fuerte (mejor esperar)
+- Contexto clave: el blue refleja la desconfianza en el peso. Comparar siempre con MEP y CCL para ver si hay una mejor opción legal
 
 PLAZO FIJO:
 - Verde: tasa efectiva mensual > inflación mensual estimada, buen momento para pesos
@@ -116,7 +116,7 @@ Respondé ÚNICAMENTE con un JSON válido con esta estructura exacta, sin markdo
       "porque": "2-3 oraciones en español rioplatense explicando el análisis"
     },
     {
-      "id": "ccl",
+      "id": "blue",
       "status": "green" | "yellow" | "red",
       "veredicto": "...",
       "porque": "..."

@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.2] — 2026-03-19
+
+### Agregado
+- Toggle dark/light mode en el header (ícono sol/luna)
+  - Tema claro: fondo crema `#f5f0eb`, textos oscuros, bordes sutiles
+  - Persiste en localStorage, detecta preferencia del sistema al primer acceso
+  - Script inline en `<head>` previene FOUC antes de que React hidrate
+- Soporte completo de `dark:` variants en todos los componentes:
+  `AssetCard`, `Semaforo`, `NoticiaCard`, `NoticiasSection`, `Recomendador`, `GlosarioTooltip`, `page.tsx`
+- Gradiente de fondo usa variables CSS (`--bg-start`, `--bg-end`) para cambio instantáneo sin parpadeo
+
 Todos los cambios relevantes del proyecto se documentan aquí.
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
