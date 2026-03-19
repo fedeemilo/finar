@@ -132,7 +132,7 @@ function Paywall({ ttl }: { ttl: number }) {
         )}
       </p>
 
-      <p className="text-gray-300 dark:text-white/20 text-xs">
+      <p className="text-gray-500 dark:text-white/20 text-xs">
         Podés volver a consultar cuando se renueve el límite.
       </p>
     </div>
