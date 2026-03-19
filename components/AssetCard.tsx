@@ -21,25 +21,25 @@ const STATUS_CONFIG = {
     color: "bg-emerald-400",
     shadow: "shadow-emerald-400/30",
     label: "Buen momento",
-    text: "text-emerald-400",
+    text: "text-emerald-500 dark:text-emerald-400",
     ring: "ring-emerald-400/20",
-    cardBorder: "border-emerald-400/10",
+    cardBorder: "border-emerald-400/25",
   },
   yellow: {
     color: "bg-amber-400",
     shadow: "shadow-amber-400/30",
     label: "Precaución",
-    text: "text-amber-400",
+    text: "text-amber-500 dark:text-amber-400",
     ring: "ring-amber-400/20",
-    cardBorder: "border-amber-400/10",
+    cardBorder: "border-amber-400/25",
   },
   red: {
     color: "bg-red-400",
     shadow: "shadow-red-400/30",
     label: "Momento difícil",
-    text: "text-red-400",
+    text: "text-red-500 dark:text-red-400",
     ring: "ring-red-400/20",
-    cardBorder: "border-red-400/10",
+    cardBorder: "border-red-400/25",
   },
 };
 
@@ -50,12 +50,12 @@ export function AssetCard({ data }: { data: AssetCardData }) {
   return (
     <button
       onClick={() => setExpanded(!expanded)}
-      className={`w-full text-left rounded-2xl border bg-black/[0.04] dark:bg-white/[0.03] backdrop-blur-sm p-5 transition-all duration-300 hover:bg-black/[0.07] dark:hover:bg-white/[0.06] active:scale-[0.98] ${config.cardBorder}`}
+      className={`w-full text-left rounded-2xl border bg-white/80 dark:bg-white/[0.03] backdrop-blur-sm p-5 transition-all duration-300 hover:bg-white dark:hover:bg-white/[0.06] active:scale-[0.98] ${config.cardBorder}`}
     >
       <div className="flex items-start gap-4">
         {/* Icon */}
-        <div className="flex-shrink-0 mt-0.5 p-2 rounded-xl bg-black/5 dark:bg-white/5">
-          <data.icono size={22} className="text-gray-500 dark:text-white/50" strokeWidth={1.75} />
+        <div className="flex-shrink-0 mt-0.5 p-2 rounded-xl bg-black/[0.07] dark:bg-white/5">
+          <data.icono size={22} className="text-gray-600 dark:text-white/50" strokeWidth={1.75} />
         </div>
 
         {/* Content */}
@@ -87,14 +87,14 @@ export function AssetCard({ data }: { data: AssetCardData }) {
           </div>
 
           {/* Veredicto */}
-          <p className="text-gray-500 dark:text-white/60 text-sm leading-relaxed">
+          <p className="text-gray-600 dark:text-white/60 text-sm leading-relaxed">
             {data.veredicto}
           </p>
         </div>
 
         {/* Chevron */}
         <ChevronDown
-          className={`flex-shrink-0 mt-1 text-gray-300 dark:text-white/30 transition-transform duration-300 ${
+          className={`flex-shrink-0 mt-1 text-gray-400 dark:text-white/30 transition-transform duration-300 ${
             expanded ? "rotate-180" : ""
           }`}
           size={18}
@@ -108,11 +108,11 @@ export function AssetCard({ data }: { data: AssetCardData }) {
         }`}
       >
         <div className={`border-t ${config.cardBorder} pt-4`}>
-          <p className="text-xs text-gray-400 dark:text-white/40 uppercase tracking-wider mb-2 font-medium">
+          <p className="text-xs text-gray-500 dark:text-white/40 uppercase tracking-wider mb-2 font-medium">
             ¿Por qué?
           </p>
           <div className="max-h-36 overflow-y-auto pr-1">
-            <p className="text-gray-600 dark:text-white/70 text-sm leading-relaxed">{data.porque}</p>
+            <p className="text-gray-700 dark:text-white/70 text-sm leading-relaxed">{data.porque}</p>
           </div>
         </div>
       </div>
@@ -122,7 +122,7 @@ export function AssetCard({ data }: { data: AssetCardData }) {
 
 export function AssetCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.04] dark:bg-white/[0.03] p-5 animate-pulse">
+    <div className="rounded-2xl border border-black/[0.12] dark:border-white/5 bg-white/80 dark:bg-white/[0.03] p-5 animate-pulse">
       <div className="flex items-start gap-4">
         <div className="w-8 h-8 bg-black/10 dark:bg-white/10 rounded-lg flex-shrink-0" />
         <div className="flex-1 space-y-2">

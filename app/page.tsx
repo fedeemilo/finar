@@ -7,7 +7,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 function LastUpdated() {
   const now = new Date();
   return (
-    <span className="text-gray-400 dark:text-white/30 text-xs">
+    <span className="text-gray-500 dark:text-white/30 text-xs">
       Actualizado:{" "}
       {now.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
     </span>
@@ -21,7 +21,7 @@ export default function Home() {
       style={{ background: "linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%)" }}
     >
       {/* Sticky header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-black/[0.07] dark:border-white/5">
+      <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-black/[0.12] dark:border-white/5">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xl font-black tracking-tight text-gray-800 dark:text-white">
@@ -36,7 +36,7 @@ export default function Home() {
                 AR
               </span>
             </span>
-            <span className="text-[10px] text-gray-400 dark:text-white/30 bg-black/5 dark:bg-white/5 px-1.5 py-0.5 rounded-md font-medium">
+            <span className="text-[10px] text-gray-500 dark:text-white/30 bg-black/[0.08] dark:bg-white/5 px-1.5 py-0.5 rounded-md font-medium">
               BETA
             </span>
           </div>
@@ -62,7 +62,7 @@ export default function Home() {
               invertir hoy?
             </span>
           </h1>
-          <p className="text-gray-500 dark:text-white/50 text-base max-w-sm mx-auto leading-relaxed">
+          <p className="text-gray-600 dark:text-white/50 text-base max-w-sm mx-auto leading-relaxed">
             Tu amigo que sabe de finanzas te explica en simple. Sin jerga, sin
             gráficos raros.
           </p>
@@ -78,46 +78,46 @@ export default function Home() {
               <span className="w-2 h-2 rounded-full bg-red-400" />
             </div>
           </div>
-          <p className="text-gray-400 dark:text-white/40 text-sm mb-5">
+          <p className="text-gray-500 dark:text-white/40 text-sm mb-5">
             Tocá cada activo para entender por qué.
           </p>
           <Semaforo />
         </section>
 
         {/* Divider */}
-        <div className="border-t border-black/[0.07] dark:border-white/5" />
+        <div className="border-t border-black/[0.12] dark:border-white/5" />
 
         {/* Recomendador */}
         <section>
           <h2 className="text-gray-800 dark:text-white font-bold text-lg mb-1">
             Tengo plata. ¿Qué hago?
           </h2>
-          <p className="text-gray-400 dark:text-white/40 text-sm mb-5">
+          <p className="text-gray-500 dark:text-white/40 text-sm mb-5">
             Ingresá tu monto y te armamos una recomendación personalizada.
           </p>
           <Recomendador />
         </section>
 
         {/* Divider */}
-        <div className="border-t border-black/[0.07] dark:border-white/5" />
+        <div className="border-t border-black/[0.12] dark:border-white/5" />
 
         {/* Noticias */}
         <section>
           <h2 className="text-gray-800 dark:text-white font-bold text-lg mb-1">
             Qué pasa en el mundo financiero
           </h2>
-          <p className="text-gray-400 dark:text-white/40 text-sm mb-5">
+          <p className="text-gray-500 dark:text-white/40 text-sm mb-5">
             Lo más relevante, resumido en dos oraciones. Sin tecnicismos.
           </p>
           <NoticiasSection />
         </section>
 
         {/* Glosario CTA */}
-        <section className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.02] p-6 text-center">
-          <p className="text-gray-500 dark:text-white/50 text-sm mb-2">
+        <section className="rounded-2xl border border-black/[0.12] dark:border-white/5 bg-white/70 dark:bg-white/[0.02] p-6 text-center">
+          <p className="text-gray-600 dark:text-white/50 text-sm mb-2">
             ¿Ves alguna palabra que no entendés?
           </p>
-          <p className="text-gray-400 dark:text-white/30 text-xs">
+          <p className="text-gray-500 dark:text-white/30 text-xs">
             Cualquier término financiero en la app tiene un{" "}
             <span className="text-emerald-500 dark:text-emerald-400 font-medium">?</span> al lado.
             Tocalo para ver qué significa.
@@ -125,7 +125,7 @@ export default function Home() {
           <div className="flex flex-wrap justify-center gap-3 mt-4">
             {["MEP", "CEDEAR", "CCL", "Plazo Fijo", "USDT"].map((term) => (
               <GlosarioTooltip key={term} term={term.replace(" ", "_")}>
-                <span className="text-gray-500 dark:text-white/50 text-sm">{term}</span>
+                <span className="text-gray-600 dark:text-white/50 text-sm">{term}</span>
               </GlosarioTooltip>
             ))}
           </div>
@@ -133,7 +133,7 @@ export default function Home() {
 
         {/* Footer */}
         <footer className="text-center pb-8">
-          <p className="text-gray-300 dark:text-white/20 text-xs">
+          <p className="text-gray-500 dark:text-white/20 text-xs">
             FinAR no es asesoramiento financiero formal. Siempre consultá con un
             profesional antes de invertir.
           </p>

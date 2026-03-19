@@ -67,9 +67,9 @@ export function Semaforo() {
     <div className="space-y-4">
       {/* Contexto general de Claude */}
       {contexto && (
-        <div className="rounded-xl border border-black/[0.07] dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.02] px-4 py-3 flex gap-3 items-start">
-          <Brain size={22} className="flex-shrink-0 mt-0.5 text-gray-400 dark:text-white/40" strokeWidth={1.75} />
-          <p className="text-gray-500 dark:text-white/60 text-sm leading-relaxed">
+        <div className="rounded-xl border border-black/[0.12] dark:border-white/5 bg-white/70 dark:bg-white/[0.02] px-4 py-3 flex gap-3 items-start">
+          <Brain size={22} className="flex-shrink-0 mt-0.5 text-gray-500 dark:text-white/40" strokeWidth={1.75} />
+          <p className="text-gray-600 dark:text-white/60 text-sm leading-relaxed">
             {contexto}
             {stale && (
               <span className="ml-2 text-amber-500/60 dark:text-amber-400/60 text-xs">(datos anteriores)</span>
