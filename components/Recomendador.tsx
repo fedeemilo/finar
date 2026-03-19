@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Lock } from "lucide-react";
 import type { RecomendacionResponse } from "@/app/api/recomendar/route";
 import { FREE_LIMIT } from "@/lib/constants";
 
@@ -117,7 +118,9 @@ function Paywall({ ttl }: { ttl: number }) {
   const renewalTime = getRenewalTime(ttl);
   return (
     <div className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.03] backdrop-blur-sm p-8 text-center">
-      <div className="text-4xl mb-4">🔒</div>
+      <div className="flex justify-center mb-4">
+        <Lock size={36} className="text-gray-400 dark:text-white/40" strokeWidth={1.75} />
+      </div>
       <h3 className="text-gray-800 dark:text-white font-bold text-lg mb-2">
         Usaste tus 3 recomendaciones gratuitas
       </h3>
