@@ -3,60 +3,55 @@
 import type { Noticia } from "@/app/api/noticias/route";
 import { ExternalLink } from "lucide-react";
 
-const CATEGORIA_CONFIG = {
-  Mundo: { color: "bg-blue-500/20 text-blue-300", emoji: "🌍" },
-  Argentina: { color: "bg-emerald-500/20 text-emerald-300", emoji: "🇦🇷" },
-  Mercados: { color: "bg-purple-500/20 text-purple-300", emoji: "📈" },
+const CATEGORIA_CONFIG: Record<Noticia["categoria"], { dot: string; label: string }> = {
+  Mundo:     { dot: "bg-blue-400",    label: "text-blue-400" },
+  Argentina: { dot: "bg-emerald-400", label: "text-emerald-400" },
+  Mercados:  { dot: "bg-purple-400",  label: "text-purple-400" },
 };
 
 export function NoticiaCard({ noticia }: { noticia: Noticia }) {
   const config = CATEGORIA_CONFIG[noticia.categoria];
 
   return (
-    <div className="rounded-2xl border border-white/5 bg-white/[0.03] backdrop-blur-sm p-5 transition-all duration-300 hover:bg-white/[0.05]">
-      {/* Header */}
-      <div className="flex items-start gap-3 mb-3">
-        <span className="text-xl flex-shrink-0">{config.emoji}</span>
-        <div className="flex-1 min-w-0">
-          <span
-            className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium mb-1.5 ${config.color}`}
-          >
-            {noticia.categoria}
-          </span>
-          <h3 className="text-white/90 font-semibold text-sm leading-snug">
-            {noticia.titulo}
-          </h3>
+    <div className="group rounded-2xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.05] transition-colors duration-200 overflow-hidden">
+      <div className="p-5 pb-4">
+        {/* Meta row */}
+        <div className="flex items-center gap-2 mb-3">
+          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${config.dot}`} />
+          <span className={`text-xs font-medium ${config.label}`}>{noticia.categoria}</span>
+          <span className="text-white/15 text-xs">·</span>
+          <span className="text-white/25 text-xs">{noticia.fuente}</span>
+          {noticia.url && noticia.url !== "#" && (
+            <a
+              href={noticia.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto flex items-center gap-1 text-white/20 hover:text-white/50 transition-colors"
+            >
+              <ExternalLink size={11} />
+            </a>
+          )}
         </div>
-      </div>
 
-      {/* Resumen */}
-      <p className="text-white/60 text-sm leading-relaxed mb-3">
-        {noticia.resumen}
-      </p>
+        {/* Título */}
+        <h3 className="text-white/90 font-semibold text-[15px] leading-snug mb-2">
+          {noticia.titulo}
+        </h3>
 
-      {/* Qué significa para mí — always visible */}
-      <div className="rounded-xl bg-emerald-400/5 border border-emerald-400/15 px-4 py-3">
-        <p className="text-xs text-emerald-400 font-medium mb-1">
-          ¿Qué significa para mí?
+        {/* Resumen */}
+        <p className="text-white/45 text-sm leading-relaxed">
+          {noticia.resumen}
         </p>
-        <p className="text-white/75 text-sm">{noticia.queSIgnificaParaMi}</p>
       </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between mt-3">
-        <span className="text-white/30 text-xs">{noticia.fuente}</span>
-        {noticia.url && noticia.url !== "#" && (
-          <a
-            href={noticia.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-1 text-xs text-white/30 hover:text-white/60 transition-colors"
-          >
-            Ver nota
-            <ExternalLink size={10} />
-          </a>
-        )}
+      {/* ¿Qué significa? — separado visualmente */}
+      <div className="mx-5 mb-5 pl-3 border-l-2 border-emerald-400/40">
+        <p className="text-[11px] text-emerald-400/70 font-medium mb-0.5 uppercase tracking-wide">
+          Para vos
+        </p>
+        <p className="text-white/65 text-sm leading-relaxed">
+          {noticia.queSIgnificaParaMi}
+        </p>
       </div>
     </div>
   );
@@ -65,18 +60,19 @@ export function NoticiaCard({ noticia }: { noticia: Noticia }) {
 export function NoticiaCardSkeleton() {
   return (
     <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-5 animate-pulse">
-      <div className="flex items-start gap-3 mb-3">
-        <div className="w-6 h-6 bg-white/10 rounded" />
-        <div className="flex-1 space-y-2">
-          <div className="h-4 bg-white/10 rounded-full w-16" />
-          <div className="h-4 bg-white/10 rounded-full w-3/4" />
-        </div>
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
+        <div className="h-3 w-16 bg-white/10 rounded-full" />
       </div>
-      <div className="space-y-2 mb-3">
+      <div className="h-4 bg-white/10 rounded-full w-3/4 mb-2" />
+      <div className="space-y-1.5 mb-4">
         <div className="h-3 bg-white/10 rounded-full w-full" />
         <div className="h-3 bg-white/10 rounded-full w-5/6" />
       </div>
-      <div className="h-16 bg-emerald-400/5 rounded-xl" />
+      <div className="pl-3 border-l-2 border-white/5 space-y-1.5">
+        <div className="h-2.5 bg-white/10 rounded-full w-12" />
+        <div className="h-3 bg-white/10 rounded-full w-full" />
+      </div>
     </div>
   );
 }

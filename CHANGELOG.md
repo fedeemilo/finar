@@ -5,6 +5,21 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.1.1] — 2026-03-19
+
+### Cambiado
+- Sección de noticias migrada de NewsAPI a RSS feeds directos (sin límites de plan)
+  - Fuentes: El Cronista, iProfesional, Ámbito, La Nación, Infobae, BBC Mundo, Perfil
+  - Claude Haiku selecciona las 5 noticias más relevantes para inversores de un pool de 20
+  - Semáforo también usa RSS como contexto de noticias para sus análisis
+- Rediseño de cards de noticias: columna única, más espacio, jerarquía visual mejorada
+  - Bloque "¿Qué significa para mí?" reemplazado por acento con borde izquierdo verde
+  - Meta row con dot de color, fuente y link externo integrado
+- Paywall del recomendador simplificado: removido bloque "Plan Pro"
+- Hora de renovación del límite: formato corregido a `2:45 am` sin locale artifacts
+
+---
+
 ## [0.1.0] — 2026-03-19
 
 ### Agregado

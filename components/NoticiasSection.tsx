@@ -18,7 +18,7 @@ export function NoticiasSection() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="flex flex-col gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
           <NoticiaCardSkeleton key={i} />
         ))}
@@ -35,7 +35,7 @@ export function NoticiasSection() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div className="flex flex-col gap-3">
       {noticias.map((noticia) => (
         <NoticiaCard key={noticia.id} noticia={noticia} />
       ))}

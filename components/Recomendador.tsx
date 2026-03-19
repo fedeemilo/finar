@@ -12,7 +12,11 @@ const LS_KEY = "finar_rec_uses";
 function getRenewalTime(ttlSeconds: number): string {
   if (ttlSeconds <= 0) return "";
   const renewsAt = new Date(Date.now() + ttlSeconds * 1000);
-  return renewsAt.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+  const h = renewsAt.getHours();
+  const m = renewsAt.getMinutes().toString().padStart(2, "0");
+  const ampm = h >= 12 ? "pm" : "am";
+  const h12 = h % 12 || 12;
+  return `${h12}:${m} ${ampm}`;
 }
 
 const PROFILES = [
@@ -119,37 +123,15 @@ function Paywall({ ttl }: { ttl: number }) {
       </h3>
       <p className="text-white/50 text-sm leading-relaxed mb-6 max-w-xs mx-auto">
         {renewalTime ? (
-          <>Tus consultas se renuevan a las <span className="text-white/70 font-medium">{renewalTime}hs</span>.</>
+          <>Tus consultas se renuevan a las <span className="text-white/70 font-medium">{renewalTime}</span>.</>
+
         ) : (
           <>El plan gratuito incluye 3 consultas cada 12 horas.</>
         )}
       </p>
 
-      <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-5 text-left mb-6">
-        <p className="text-emerald-400 font-semibold text-sm mb-3">
-          ✨ Próximamente — Plan Pro
-        </p>
-        <ul className="space-y-2 text-white/60 text-sm">
-          <li className="flex items-center gap-2">
-            <span className="text-emerald-400">→</span> Recomendaciones ilimitadas
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-emerald-400">→</span> Análisis con modelo avanzado
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="text-emerald-400">→</span> Historial de recomendaciones
-          </li>
-        </ul>
-      </div>
-
-      <p className="text-white/30 text-xs">
-        ¿Querés acceso anticipado?{" "}
-        <a
-          href="mailto:hola@finar.ar"
-          className="text-emerald-400 hover:underline"
-        >
-          Escribinos
-        </a>
+      <p className="text-white/20 text-xs">
+        Podés volver a consultar cuando se renueve el límite.
       </p>
     </div>
   );

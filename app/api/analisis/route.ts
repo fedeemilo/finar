@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { anthropic } from "@/lib/claude";
 import { fetchCotizaciones } from "@/lib/cotizaciones";
 import { getCached, setCache } from "@/lib/redis";
+import { fetchAllFeeds } from "@/lib/rss";
 
 const CACHE_KEY = "analisis:semaforo";
 const TTL = 30 * 60; // 30 minutos
@@ -72,40 +73,17 @@ REGLAS PARA TUS RESPUESTAS:
 - Si hay información contradictoria, priorizá la prudencia`;
 
 async function fetchNoticias(): Promise<string> {
-  const apiKey = process.env.NEWS_API_KEY;
-  if (!apiKey) return "Sin noticias disponibles.";
+  try {
+    const articles = await fetchAllFeeds();
+    if (articles.length === 0) return "Sin noticias disponibles.";
 
-  const queries = [
-    "argentina dolar economia inflacion BCRA",
-    "bitcoin mercados financieros wall street",
-    "oro commodities reserva federal tasas",
-  ];
-
-  const titulos: string[] = [];
-
-  for (const q of queries) {
-    try {
-      const res = await fetch(
-        `https://newsapi.org/v2/everything?q=${encodeURIComponent(q)}&sortBy=publishedAt&pageSize=3&apiKey=${apiKey}`,
-        { next: { revalidate: 0 } }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        const articles = (data.articles || []) as Array<{ title: string; description?: string }>;
-        for (const a of articles) {
-          if (a.title && !a.title.includes("[Removed]")) {
-            titulos.push(`- ${a.title}${a.description ? ": " + a.description.slice(0, 100) : ""}`);
-          }
-        }
-      }
-    } catch {
-      // continuar con otras queries
-    }
+    return articles
+      .slice(0, 12)
+      .map((a) => `- [${a.fuente}] ${a.titulo}${a.descripcion ? ": " + a.descripcion.slice(0, 100) : ""}`)
+      .join("\n");
+  } catch {
+    return "No se pudieron cargar noticias recientes.";
   }
-
-  return titulos.length > 0
-    ? titulos.slice(0, 9).join("\n")
-    : "No se pudieron cargar noticias recientes.";
 }
 
 async function generarAnalisis(): Promise<AnalisisResponse> {

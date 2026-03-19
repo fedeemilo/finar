@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { anthropic, SYSTEM_PROMPT } from "@/lib/claude";
 import { getCached, setCache } from "@/lib/redis";
+import { fetchAllFeeds } from "@/lib/rss";
 
 const CACHE_KEY = "noticias:processed";
-const TTL = 60 * 60; // 1 hour
+const TTL = 60 * 60; // 1 hora
 
 export interface Noticia {
   id: string;
@@ -16,60 +17,37 @@ export interface Noticia {
 }
 
 async function fetchAndProcessNoticias(): Promise<Noticia[]> {
-  const apiKey = process.env.NEWS_API_KEY;
+  const articles = await fetchAllFeeds();
 
-  if (!apiKey) {
-    // Return mock data if no API key
-    return getMockNoticias();
-  }
+  if (articles.length === 0) return getMockNoticias();
 
-  const queries = [
-    "argentina economia pesos dolares inflacion",
-    "federal reserve interest rates markets",
-    "bitcoin crypto mercados financieros",
-  ];
-
-  const allArticles: { title: string; description: string; url: string; source: { name: string } }[] = [];
-
-  for (const q of queries) {
-    try {
-      const res = await fetch(
-        `https://newsapi.org/v2/everything?q=${encodeURIComponent(q)}&language=es&pageSize=2&sortBy=publishedAt&apiKey=${apiKey}`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        allArticles.push(...(data.articles || []));
-      }
-    } catch {
-      // continue with other queries
-    }
-  }
-
-  if (allArticles.length === 0) return getMockNoticias();
-
-  // Process with Claude
-  const articlesText = allArticles
-    .slice(0, 5)
-    .map((a, i) => `${i + 1}. ${a.title}: ${a.description || ""}`)
+  // Pasamos los 20 más recientes a Claude para que seleccione los 5 mejores
+  const articlesText = articles
+    .slice(0, 20)
+    .map((a, i) => `${i + 1}. [${a.fuente}] ${a.titulo}${a.descripcion ? ` — ${a.descripcion.slice(0, 120)}` : ""}`)
     .join("\n");
 
   const stream = anthropic.messages.stream({
-    model: "claude-opus-4-6",
+    model: "claude-haiku-4-5",
     max_tokens: 2000,
     system: SYSTEM_PROMPT,
     messages: [
       {
         role: "user",
-        content: `Tenés estas noticias financieras. Para cada una, generá un JSON con:
-- id: número del 1 al n
-- titulo: el título en español simple (máx 10 palabras)
-- resumen: resumen en máximo 2 oraciones simples en español rioplatense
-- queSIgnificaParaMi: qué impacto tiene esto para un argentino común (1 oración)
-- categoria: una de "Mundo", "Argentina" o "Mercados"
+        content: `Tenés estas noticias de hoy de distintos medios argentinos e internacionales.
 
-Respondé SOLO con un array JSON válido, sin markdown ni explicaciones.
+Seleccioná las 5 que sean MÁS relevantes para alguien que quiere invertir en Argentina. Priorizá noticias sobre: dólar, inflación, tasas, economía argentina, mercados financieros, cripto, reservas del BCRA. Ignorá noticias de política pura, deportes, farándula o sociedad que no impacten en inversiones.
 
-Noticias:
+Para cada noticia seleccionada, generá este JSON:
+- id: número del 1 al 5
+- titulo: título en español claro (máx 10 palabras)
+- resumen: 2 oraciones simples explicando la noticia
+- queSIgnificaParaMi: qué impacto concreto tiene para un inversor argentino (1 oración directa)
+- categoria: una de "Argentina", "Mundo" o "Mercados"
+
+Respondé SOLO con un array JSON válido, sin markdown ni texto extra.
+
+Noticias disponibles:
 ${articlesText}`,
       },
     ],
@@ -79,13 +57,25 @@ ${articlesText}`,
   const text = finalMessage.content.find((b) => b.type === "text")?.text ?? "[]";
 
   try {
-    const parsed = JSON.parse(text.trim());
-    return parsed.map((n: Omit<Noticia, 'url' | 'fuente'> & { id: number | string }, i: number) => ({
-      ...n,
-      id: String(n.id || i + 1),
-      url: allArticles[i]?.url || "#",
-      fuente: allArticles[i]?.source?.name || "Fuente",
-    }));
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error("No JSON array found");
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    return parsed.map((n: Omit<Noticia, "url" | "fuente"> & { id: number | string }, i: number) => {
+      // Buscar el artículo original por título aproximado
+      const original = articles.find((a) =>
+        a.titulo.toLowerCase().includes(
+          String(n.titulo).toLowerCase().slice(0, 20)
+        )
+      ) ?? articles[i];
+
+      return {
+        ...n,
+        id: String(n.id ?? i + 1),
+        url: original?.url ?? "#",
+        fuente: original?.fuente ?? "Fuente",
+      };
+    });
   } catch {
     return getMockNoticias();
   }
@@ -95,47 +85,12 @@ function getMockNoticias(): Noticia[] {
   return [
     {
       id: "1",
-      titulo: "La FED mantiene tasas altas en EEUU",
-      resumen:
-        "La Reserva Federal de Estados Unidos decidió no bajar las tasas de interés por el momento. Quieren asegurarse de que la inflación esté controlada antes de hacer cambios.",
-      queSIgnificaParaMi:
-        "Las tasas altas hacen que el dólar sea más fuerte, lo que puede presionar al peso argentino.",
-      categoria: "Mundo",
-      url: "#",
-      fuente: "Reuters",
-    },
-    {
-      id: "2",
-      titulo: "Bitcoin supera los USD 70.000",
-      resumen:
-        "El Bitcoin volvió a subir con fuerza y superó los 70 mil dólares. Los inversores esperan que siga subiendo tras la aprobación de ETFs.",
-      queSIgnificaParaMi:
-        "Si tenés cripto, es un buen momento para evaluar si querés vender parte y asegurar ganancias.",
-      categoria: "Mercados",
-      url: "#",
-      fuente: "CoinDesk",
-    },
-    {
-      id: "3",
-      titulo: "Argentina reduce el déficit fiscal",
-      resumen:
-        "El gobierno logró un superávit fiscal por primera vez en muchos años. Esto significa que el Estado está gastando menos de lo que recauda.",
-      queSIgnificaParaMi:
-        "Una señal positiva para la economía: menos necesidad de emitir pesos, lo que podría ayudar a frenar la inflación.",
+      titulo: "Actualizando noticias del día",
+      resumen: "Estamos obteniendo las noticias más recientes. Volvé en unos minutos para ver el análisis actualizado.",
+      queSIgnificaParaMi: "Las fuentes de noticias están siendo consultadas ahora mismo.",
       categoria: "Argentina",
       url: "#",
-      fuente: "Infobae",
-    },
-    {
-      id: "4",
-      titulo: "Sube el precio del petróleo a nivel global",
-      resumen:
-        "El barril de petróleo subió por tensiones en Medio Oriente. Esto afecta a muchos países que dependen de importar energía.",
-      queSIgnificaParaMi:
-        "Para Argentina puede encarecer importaciones, pero también sube el precio de empresas petroleras como YPF.",
-      categoria: "Mundo",
-      url: "#",
-      fuente: "Bloomberg",
+      fuente: "FinAR",
     },
   ];
 }
