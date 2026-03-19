@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.5] — 2026-03-19
+
+### Cambiado
+- Light mode: cards con fondo `bg-white/80` en lugar de casi-transparente en cards de noticias y Recomendador
+- Light mode: texto del paywall "Podés volver a consultar..." mejorado de `gray-300` a `gray-500`
+- Íconos Semáforo: `BrainCircuit` → `Brain` (más simple); tamaño ajustado a 22px
+- Reemplazado emoji 🔒 por ícono `Lock` de Lucide en el Paywall
+
+### Documentación
+- `CLAUDE.md`: actualizado modelo (Sonnet), estructura de archivos, dark mode, stale-while-revalidate, restricciones de route files, deploy checklist
+- `README.md`: actualizado stack, activos (CCL → Blue), estructura de archivos, env vars
+
+---
+
 ## [0.1.4] — 2026-03-19
 
 ### Cambiado
