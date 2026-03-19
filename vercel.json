@@ -1,8 +1,1 @@
-{
-  "crons": [
-    {
-      "path": "/api/analisis/revalidate",
-      "schedule": "*/25 * * * *"
-    }
-  ]
-}
+{}
