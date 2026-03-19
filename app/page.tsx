@@ -1,101 +1,140 @@
-import Image from "next/image";
+import { Semaforo } from "@/components/Semaforo";
+import { NoticiasSection } from "@/components/NoticiasSection";
+import { Recomendador } from "@/components/Recomendador";
+import { GlosarioTooltip } from "@/components/GlosarioTooltip";
+
+function LastUpdated() {
+  const now = new Date();
+  return (
+    <span className="text-white/30 text-xs">
+      Actualizado:{" "}
+      {now.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
+    </span>
+  );
+}
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div
+      className="min-h-screen"
+      style={{ background: "linear-gradient(180deg, #0a0a0f 0%, #0d0d16 100%)" }}
+    >
+      {/* Sticky header */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/5">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xl font-black tracking-tight text-white">
+              Fin
+              <span
+                style={{
+                  background: "linear-gradient(135deg, #00c896, #00e6aa)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                AR
+              </span>
+            </span>
+            <span className="text-[10px] text-white/30 bg-white/5 px-1.5 py-0.5 rounded-md font-medium">
+              BETA
+            </span>
+          </div>
+          <LastUpdated />
         </div>
+      </header>
+
+      <main className="max-w-2xl mx-auto px-4 py-8 space-y-12">
+        {/* Hero */}
+        <section className="text-center pt-4">
+          <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-3">
+            ¿En qué me conviene{" "}
+            <span
+              style={{
+                background: "linear-gradient(135deg, #00c896, #00e6aa)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              invertir hoy?
+            </span>
+          </h1>
+          <p className="text-white/50 text-base max-w-sm mx-auto leading-relaxed">
+            Tu amigo que sabe de finanzas te explica en simple. Sin jerga, sin
+            gráficos raros.
+          </p>
+        </section>
+
+        {/* Semáforo de activos */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-white font-bold text-lg">Semáforo de activos</h2>
+            <div className="flex gap-1 items-center ml-auto">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <span className="w-2 h-2 rounded-full bg-red-400" />
+            </div>
+          </div>
+          <p className="text-white/40 text-sm mb-5">
+            Tocá cada activo para entender por qué.
+          </p>
+          <Semaforo />
+        </section>
+
+        {/* Divider */}
+        <div className="border-t border-white/5" />
+
+        {/* Recomendador */}
+        <section>
+          <h2 className="text-white font-bold text-lg mb-1">
+            Tengo plata. ¿Qué hago?
+          </h2>
+          <p className="text-white/40 text-sm mb-5">
+            Ingresá tu monto y te armamos una recomendación personalizada.
+          </p>
+          <Recomendador />
+        </section>
+
+        {/* Divider */}
+        <div className="border-t border-white/5" />
+
+        {/* Noticias */}
+        <section>
+          <h2 className="text-white font-bold text-lg mb-1">
+            Qué pasa en el mundo financiero
+          </h2>
+          <p className="text-white/40 text-sm mb-5">
+            Lo más relevante, resumido en dos oraciones. Sin tecnicismos.
+          </p>
+          <NoticiasSection />
+        </section>
+
+        {/* Glosario CTA */}
+        <section className="rounded-2xl border border-white/5 bg-white/[0.02] p-6 text-center">
+          <p className="text-white/50 text-sm mb-2">
+            ¿Ves alguna palabra que no entendés?
+          </p>
+          <p className="text-white/30 text-xs">
+            Cualquier término financiero en la app tiene un{" "}
+            <span className="text-emerald-400 font-medium">?</span> al lado.
+            Tocalo para ver qué significa.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3 mt-4">
+            {["MEP", "CEDEAR", "CCL", "Plazo Fijo", "USDT"].map((term) => (
+              <GlosarioTooltip key={term} term={term.replace(" ", "_")}>
+                <span className="text-white/50 text-sm">{term}</span>
+              </GlosarioTooltip>
+            ))}
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="text-center pb-8">
+          <p className="text-white/20 text-xs">
+            FinAR no es asesoramiento financiero formal. Siempre consultá con un
+            profesional antes de invertir.
+          </p>
+        </footer>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }

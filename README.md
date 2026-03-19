@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FinAR
 
-## Getting Started
+**¿En qué me conviene invertir hoy?**
 
-First, run the development server:
+Asesor financiero para argentinos potenciado por IA. Analiza el mercado en tiempo real — cotizaciones del dólar, noticias económicas y contexto argentino — y te dice dónde poner la plata de forma simple y clara.
+
+---
+
+## Qué hace
+
+- **Semáforo de activos** — Claude analiza MEP, CCL, Plazo Fijo, CEDEARs, Cripto y Oro y les asigna un estado (verde / amarillo / rojo) con contexto de por qué
+- **Noticias resumidas** — Las principales noticias económicas del día explicadas en lenguaje simple
+- **Recomendador personalizado** — Wizard de 2 pasos: ingresás tu monto, moneda y perfil de riesgo, y Claude genera una distribución de cartera con barras de porcentaje y PDF descargable
+- **Rate limiting** — 3 recomendaciones gratuitas cada 12 horas por IP, con hora exacta de renovación
+
+---
+
+## Stack
+
+- **Next.js 14** App Router + TypeScript
+- **Tailwind CSS v3** con tema dark custom
+- **shadcn/ui v4** con `@base-ui/react`
+- **Anthropic SDK** — `claude-opus-4-6` para análisis de mercado, `claude-haiku-4-5` para recomendaciones
+- **Upstash Redis** — cache de cotizaciones/noticias/análisis + rate limiting + analytics
+- **NewsAPI** — titulares económicos en tiempo real
+
+---
+
+## Setup local
+
+### 1. Clonar e instalar
+
+```bash
+git clone https://github.com/fedeemilo/finar
+cd finar
+npm install
+```
+
+### 2. Variables de entorno
+
+Crear `.env.local` en la raíz:
+
+```bash
+ANTHROPIC_API_KEY=        # console.anthropic.com
+UPSTASH_REDIS_REST_URL=   # console.upstash.com
+UPSTASH_REDIS_REST_TOKEN= # console.upstash.com
+NEWS_API_KEY=             # newsapi.org
+ADMIN_SECRET=             # cualquier string, para /admin?key=XXX
+```
+
+### 3. Correr en desarrollo
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploy en Vercel
 
-## Learn More
+1. Importar el repo desde [vercel.com/new](https://vercel.com/new)
+2. Agregar las 5 variables de entorno en el dashboard de Vercel
+3. Deploy automático en cada push a `main`
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Panel de uso
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Disponible en `/admin?key={ADMIN_SECRET}`. Muestra:
 
-## Deploy on Vercel
+- Total de recomendaciones generadas (histórico y hoy)
+- IPs únicas del día
+- Distribución de perfiles de riesgo (conservador / moderado / arriesgado)
+- Actividad por día (últimos 7 días) y por hora (hoy)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Los datos se registran solo cuando se genera una recomendación exitosa, sin bots ni tráfico falso.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Estructura del proyecto
+
+```
+app/
+├── page.tsx              Página principal
+├── layout.tsx            Font + providers
+├── globals.css           Variables CSS dark theme
+├── admin/page.tsx        Dashboard de uso (server component)
+└── api/
+    ├── analisis/         Claude analiza activos del mercado
+    ├── recomendar/       Wizard con rate limiting por IP
+    ├── cotizaciones/     Proxy Bluelytics con cache 15min
+    └── noticias/         NewsAPI + resumen Claude con cache 1h
+
+lib/
+├── claude.ts             Cliente Anthropic + system prompt
+├── redis.ts              Cliente Upstash + helpers de cache
+├── cotizaciones.ts       Fetch cotizaciones dólar (Bluelytics)
+└── constants.ts          Constantes compartidas server/client
+
+components/
+├── Semaforo.tsx          Grilla de activos con análisis Claude
+├── AssetCard.tsx         Card con estado, veredicto y detalle
+├── Recomendador.tsx      Wizard + resultado + paywall + PDF
+└── GlosarioTooltip.tsx   Tooltips con términos financieros
+```
+
+---
+
+## Licencia
+
+MIT

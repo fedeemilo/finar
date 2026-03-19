@@ -1,0 +1,133 @@
+"use client";
+
+import { useState } from "react";
+import { GlosarioTooltip } from "./GlosarioTooltip";
+import { ChevronDown } from "lucide-react";
+
+export type SemaforoStatus = "green" | "yellow" | "red";
+
+export interface AssetCardData {
+  id: string;
+  nombre: string;
+  icono: string;
+  status: SemaforoStatus;
+  veredicto: string;
+  porque: string;
+  glosarioTerm?: string;
+}
+
+const STATUS_CONFIG = {
+  green: {
+    color: "bg-emerald-400",
+    shadow: "shadow-emerald-400/30",
+    label: "Buen momento",
+    text: "text-emerald-400",
+    ring: "ring-emerald-400/20",
+    cardBorder: "border-emerald-400/10",
+  },
+  yellow: {
+    color: "bg-amber-400",
+    shadow: "shadow-amber-400/30",
+    label: "Precaución",
+    text: "text-amber-400",
+    ring: "ring-amber-400/20",
+    cardBorder: "border-amber-400/10",
+  },
+  red: {
+    color: "bg-red-400",
+    shadow: "shadow-red-400/30",
+    label: "Momento difícil",
+    text: "text-red-400",
+    ring: "ring-red-400/20",
+    cardBorder: "border-red-400/10",
+  },
+};
+
+export function AssetCard({ data }: { data: AssetCardData }) {
+  const [expanded, setExpanded] = useState(false);
+  const config = STATUS_CONFIG[data.status];
+
+  return (
+    <button
+      onClick={() => setExpanded(!expanded)}
+      className={`w-full text-left rounded-2xl border bg-white/[0.03] backdrop-blur-sm p-5 transition-all duration-300 hover:bg-white/[0.06] active:scale-[0.98] ${config.cardBorder}`}
+    >
+      <div className="flex items-start gap-4">
+        {/* Icon */}
+        <div className="text-3xl flex-shrink-0 mt-0.5">{data.icono}</div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-2">
+            {/* Status dot with pulse */}
+            <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+              <span
+                className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-50 ${config.color}`}
+              />
+              <span
+                className={`relative inline-flex rounded-full h-2.5 w-2.5 ${config.color}`}
+              />
+            </span>
+            <span className={`text-xs font-medium ${config.text}`}>
+              {config.label}
+            </span>
+          </div>
+
+          {/* Name */}
+          <div className="text-white/90 font-semibold text-base mb-1">
+            {data.glosarioTerm ? (
+              <GlosarioTooltip term={data.glosarioTerm}>
+                {data.nombre}
+              </GlosarioTooltip>
+            ) : (
+              data.nombre
+            )}
+          </div>
+
+          {/* Veredicto */}
+          <p className="text-white/60 text-sm leading-relaxed">
+            {data.veredicto}
+          </p>
+        </div>
+
+        {/* Chevron */}
+        <ChevronDown
+          className={`flex-shrink-0 mt-1 text-white/30 transition-transform duration-300 ${
+            expanded ? "rotate-180" : ""
+          }`}
+          size={18}
+        />
+      </div>
+
+      {/* Expanded content */}
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          expanded ? "max-h-48 opacity-100 mt-4" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className={`border-t ${config.cardBorder} pt-4`}>
+          <p className="text-xs text-white/40 uppercase tracking-wider mb-2 font-medium">
+            ¿Por qué?
+          </p>
+          <p className="text-white/70 text-sm leading-relaxed">{data.porque}</p>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+export function AssetCardSkeleton() {
+  return (
+    <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-5 animate-pulse">
+      <div className="flex items-start gap-4">
+        <div className="w-8 h-8 bg-white/10 rounded-lg flex-shrink-0" />
+        <div className="flex-1 space-y-2">
+          <div className="h-2.5 bg-white/10 rounded-full w-20" />
+          <div className="h-4 bg-white/10 rounded-full w-32" />
+          <div className="h-3 bg-white/10 rounded-full w-full" />
+          <div className="h-3 bg-white/10 rounded-full w-4/5" />
+        </div>
+      </div>
+    </div>
+  );
+}
