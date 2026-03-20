@@ -14,6 +14,49 @@ import {
 import { AssetCard, AssetCardData, AssetCardSkeleton } from "./AssetCard";
 import type { AnalisisResponse } from "@/app/api/analisis/route";
 
+const LOADING_STEPS = [
+  { text: "Consultando cotizaciones del dólar en tiempo real...", delay: 0 },
+  { text: "Revisando las últimas noticias económicas...",         delay: 6000 },
+  { text: "Claude está analizando cada activo...",                delay: 12000 },
+  { text: "Evaluando riesgos y oportunidades del mercado...",     delay: 20000 },
+  { text: "Calculando el semáforo de hoy...",                     delay: 28000 },
+  { text: "Casi listo, un momento más...",                        delay: 36000 },
+];
+
+function LoadingMessage() {
+  const [stepIndex, setStepIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    LOADING_STEPS.forEach((step, i) => {
+      if (i === 0) return;
+      timers.push(
+        setTimeout(() => {
+          setVisible(false);
+          setTimeout(() => {
+            setStepIndex(i);
+            setVisible(true);
+          }, 300);
+        }, step.delay)
+      );
+    });
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  return (
+    <div className="flex items-center gap-2 h-5 mb-5">
+      <span
+        className={`text-sm text-gray-500 dark:text-white/40 transition-opacity duration-300 ${
+          visible ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        {LOADING_STEPS[stepIndex].text}
+      </span>
+    </div>
+  );
+}
+
 const ASSET_META: Record<string, { nombre: string; icono: LucideIcon; glosarioTerm?: string }> = {
   mep:          { nombre: "Dólar MEP",        icono: ArrowRightLeft, glosarioTerm: "MEP" },
   blue:         { nombre: "Dólar Blue",       icono: Banknote,       glosarioTerm: "Blue" },
@@ -53,7 +96,7 @@ export function Semaforo() {
   if (loading) {
     return (
       <div className="space-y-3">
-        <div className="h-4 w-3/4 bg-black/5 dark:bg-white/5 rounded-full animate-pulse mb-5" />
+        <LoadingMessage />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
           {Array.from({ length: 6 }).map((_, i) => (
             <AssetCardSkeleton key={i} />
