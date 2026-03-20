@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.6] — 2026-03-20
+
+### Agregado
+- Footer: leyenda "Hecho con ♥ por fedmilo" con link a fedmilo.com
+- Semáforo: mensajes de carga rotativos durante el análisis — texto cambia cada 6-8s para informar al usuario del proceso
+- Semáforo: subtítulo "Tocá cada activo..." se oculta durante la carga y aparece solo cuando los datos están listos
+
+---
+
 ## [0.1.5] — 2026-03-19
 
 ### Cambiado
