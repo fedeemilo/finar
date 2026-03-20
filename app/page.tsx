@@ -78,9 +78,6 @@ export default function Home() {
               <span className="w-2 h-2 rounded-full bg-red-400" />
             </div>
           </div>
-          <p className="text-gray-500 dark:text-white/40 text-sm mb-5">
-            Tocá cada activo para entender por qué.
-          </p>
           <Semaforo />
         </section>
 

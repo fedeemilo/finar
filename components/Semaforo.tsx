@@ -108,6 +108,10 @@ export function Semaforo() {
 
   return (
     <div className="space-y-4">
+      <p className="text-gray-500 dark:text-white/40 text-sm">
+        Tocá cada activo para entender por qué.
+      </p>
+
       {/* Contexto general de Claude */}
       {contexto && (
         <div className="rounded-xl border border-black/[0.12] dark:border-white/5 bg-white/70 dark:bg-white/[0.02] px-4 py-3 flex gap-3 items-start">
