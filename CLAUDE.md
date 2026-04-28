@@ -32,6 +32,7 @@ app/
   layout.tsx                      — Font, TooltipProvider, FOUC prevention script
   globals.css                     — Variables CSS dark/light theme, sin @import shadcn
   admin/page.tsx                  — Dashboard de uso (protegido por ?key=)
+  noticias/page.tsx               — Página de noticias diarias (server component, lee Redis)
   api/
     analisis/route.ts             — Sirve análisis con stale-while-revalidate (Sonnet, 30min fresh)
     analisis/revalidate/route.ts  — Endpoint del Vercel Cron para regenerar análisis (cada 25min)
@@ -48,14 +49,18 @@ lib/
   constants.ts              — FREE_LIMIT, LIMIT_TTL_SECONDS (safe para client+server)
 
 components/
-  Semaforo.tsx              — Grilla de activos con status Claude (Dólar Blue, no CCL)
-  AssetCard.tsx             — Card expandible con dot animado e ícono Lucide
-  NoticiaCard.tsx           — Card de noticia con resumen + "Para vos"
-  NoticiasSection.tsx       — Sección de noticias con skeleton
-  Recomendador.tsx          — Wizard 2 pasos + resultado + paywall
-  ThemeToggle.tsx           — Toggle dark/light mode (sun/moon)
-  GlosarioTooltip.tsx       — Tooltip con términos financieros
-  ui/                       — Componentes shadcn/base-ui
+  Semaforo.tsx                  — Grilla de activos con status Claude (Dólar Blue, no CCL)
+  AssetCard.tsx                 — Card expandible con dot animado e ícono Lucide
+  NoticiaCard.tsx               — Card de noticia con resumen + "Para vos"
+  NoticiasSection.tsx           — Sección de noticias con skeleton
+  Recomendador.tsx              — Wizard 2 pasos + resultado + paywall
+  ThemeToggle.tsx               — Toggle dark/light mode (sun/moon)
+  GlosarioTooltip.tsx           — Tooltip con términos financieros
+  NoticiaImagenFallback.tsx     — Imagen con fallback por degradado según fuente (client component)
+  ui/                           — Componentes shadcn/base-ui
+
+n8n/
+  news_summary_v2.json      — Workflow n8n activo: RSS → Claude Opus → scraping og:image → Redis
 ```
 
 ---
@@ -90,8 +95,10 @@ El proyecto usa Tailwind v3. NO agregar `@import "shadcn/tailwind.css"` ni impor
 ### Modelos Claude
 - `/api/analisis` → `claude-sonnet-4-6` (cold start ~6-10s, stale-while-revalidate cubre al usuario)
 - `/api/recomendar` → `claude-haiku-4-5` (formato simple, más barato, menos carga)
+- `news_summary_v2.json` (n8n) → `claude-opus-4-6` (corre 1 vez/día a las 9am, costo ~$0.10-0.20/día, calidad máxima justificada)
 - Cliente Anthropic tiene `maxRetries: 3` para manejar errores 529 overloaded
-- **NO usar `claude-opus-4-6` para análisis** — cold start de 30-40s es inaceptable sin cache
+- **NO usar `claude-opus-4-6` en endpoints de usuario** — cold start de 30-40s es inaceptable sin cache
+- El error 529 "Overloaded" de la API de Anthropic es transitorio — reintentar es suficiente
 
 ### Extracción de JSON de Claude
 Siempre usar regex antes de `JSON.parse`:
@@ -105,7 +112,8 @@ Claude a veces envuelve el JSON en bloques markdown.
 ### Rate limiting
 - Fuente de verdad: Redis key `recomendar:uses:{ip}` con TTL de 12 horas
 - Mirror cliente: localStorage key `finar_rec_uses`
-- Al montar Recomendador: fetch GET /api/recomendar, tomar el mayor entre ambos
+- Al montar Recomendador: fetch GET /api/recomendar, sincronizar con servidor
+- **Bug corregido (v0.1.7):** `Math.max(local, server)` nunca permitía que el límite se renovara porque localStorage persistía el valor 3 aunque Redis expirara. Fix: si `ttl <= 0` (key expirada), confiar en el servidor y resetear localStorage. Solo usar `Math.max` cuando `ttl > 0`.
 - GET /api/recomendar devuelve `{ used, limit, ttl }` — ttl en segundos para calcular hora de renovación
 
 ### Analytics en Redis
@@ -145,6 +153,63 @@ Ruta: `/admin?key={ADMIN_SECRET}`
 - Los archivos `app/api/*/route.ts` solo pueden exportar handlers HTTP (`GET`, `POST`, etc.) y config (`dynamic`, `runtime`)
 - Toda lógica compartida debe vivir en `lib/` — por eso existe `lib/analisis.ts`
 - Exportar funciones arbitrarias desde un route file causa error de build
+
+### Página de noticias diarias (`/noticias`)
+
+La página lee la key `noticias:diarias` de Redis (escrita por el workflow n8n cada mañana).
+
+**Estructura del JSON en Redis:**
+```typescript
+{
+  fecha: string;           // "YYYY-MM-DD"
+  resumen: string;         // resumen ejecutivo 3-4 oraciones
+  top3: [{
+    titulo: string;
+    descripcion: string;   // 4-5 oraciones con contexto y actores
+    fuente: string;        // nombre del medio
+    url: string;           // URL del artículo original
+    imagen: string;        // og:image scrapeada, o "" si no encontró
+  }];
+  tendencias: string[];    // 3 strings analíticos de 2-3 oraciones c/u
+  conclusion: string;      // 2 oraciones accionables
+}
+```
+
+**TTL:** 90000 segundos (~25h). Se sobreescribe cada ejecución del workflow (SET sin acumulación).
+
+**Diseño:** editorial estilo portal de noticias — `max-w-7xl`, hero full-width con gradient overlay, grid 2 columnas para noticias secundarias, sidebar de conclusión con bordes de 3px estilo diario.
+
+**`NoticiaImagenFallback`** es un client component que maneja `onError` de la imagen. Fallback por degradado según fuente: LN→azul, Ámbito→naranja, BBC→rojo, Perfil→violeta, Clarín→cyan.
+
+**Contraste light mode:** nunca usar `text-zinc-400` para texto informativo sobre fondo blanco — mínimo `text-zinc-500` (contrast ratio ~4.6:1). `text-zinc-300` es invisible en light mode.
+
+### Workflow n8n (`news_summary_v2.json`)
+
+Flujo activo que corre diariamente a las 9am. **Nunca usar el `news_summary.json` original** — está deprecado.
+
+**Pipeline:**
+```
+Schedule (9am)
+→ 5 RSS feeds en paralelo (LN, Ámbito, BBC, Perfil, Clarín)
+→ Limit 10 c/u → Merge (50 artículos)
+→ Python: formatear artículos con texto + imagen RSS si existe
+→ Claude Opus 4.6: generar JSON estructurado (resumen, top3, tendencias, conclusion)
+→ Parsear JSON Claude (validar estructura, agregar fecha)
+→ Preparar scraping: split en 3 items (uno por URL del top3)
+→ Scrape artículo: HTTP GET con User-Agent, timeout 10s, continueOnFail
+→ Extraer og:image: regex sobre HTML, decodificar &amp; → &
+→ Agregar resultados: Aggregate node → 1 item con array de 3
+→ Reconstruir con imágenes: inyectar og:image en data, armar upstashBody
+→ Guardar en Upstash Redis: POST al REST API con comando ["SET", key, value, "EX", "90000"]
+```
+
+**Credencial Upstash en n8n:** tipo "Header Auth", Header Name: `Authorization`, Header Value: `Bearer {UPSTASH_REDIS_REST_TOKEN}`. URL del nodo HTTP apunta al root de Upstash (sin path).
+
+**Body de Upstash:** enviar como raw `application/json` con el array stringificado `JSON.stringify(["SET", ...])`. Si se envía como JSON body del nodo n8n, lo envuelve en objeto y falla con "expected JSON array".
+
+**og:image:** las URLs extraídas del HTML pueden tener entidades HTML (`&amp;`). Siempre decodificar con `.replace(/&amp;/g, '&')` antes de guardar.
+
+**Retry en Claude:** el nodo "Analizar con Claude" puede fallar con error 529 (overloaded). Configurar "Retry On Fail" en el nodo con 3 intentos y 10s de espera.
 
 ### Progress bars en Recomendador
 NO usar el componente `<Progress>` de shadcn/base-ui. Usar div custom:
