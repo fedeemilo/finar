@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { Semaforo } from "@/components/Semaforo";
 import { NoticiasSection } from "@/components/NoticiasSection";
 import { Recomendador } from "@/components/Recomendador";
 import { GlosarioTooltip } from "@/components/GlosarioTooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Newspaper } from "lucide-react";
 
 function LastUpdated() {
   const now = new Date();
@@ -42,6 +44,13 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-3">
             <LastUpdated />
+            <Link
+              href="/noticias"
+              className="flex items-center gap-1.5 text-stone-500 dark:text-white/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors text-xs font-medium"
+            >
+              <Newspaper size={14} />
+              Noticias
+            </Link>
             <ThemeToggle />
           </div>
         </div>

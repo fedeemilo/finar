@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.8] — 2026-04-28
+
+### Agregado
+- Página `/noticias`: resumen diario editorial alimentado por n8n + Claude vía Redis (`noticias:diarias`)
+- Componente `NoticiaImagenFallback`: imagen con fallback por degradado según fuente (LN, Ámbito, BBC, Perfil, Clarín)
+- Link "Noticias" en el header de la home
+- Workflow n8n `news_summary_v2.json`: emite JSON estructurado y escribe a Upstash en vez de enviar email
+
+---
+
 ## [0.1.7] — 2026-04-28
 
 ### Corregido
