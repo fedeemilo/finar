@@ -160,9 +160,10 @@ export function Recomendador() {
     fetch("/api/recomendar")
       .then((r) => r.json())
       .then((data: { used: number; limit: number; ttl: number }) => {
-        // El servidor es la fuente de verdad — tomar el mayor entre ambos
         const serverUses = data.used ?? 0;
-        const real = Math.max(local, serverUses);
+        // Si la key de Redis expiró (ttl <= 0), el límite se renovó — confiar en servidor.
+        // Solo tomar el mayor cuando la key existe (ttl > 0) para manejar race conditions de sesión.
+        const real = data.ttl > 0 ? Math.max(local, serverUses) : serverUses;
         setUses(real);
         setLocalUses(real);
         if (data.ttl > 0) setTtl(data.ttl);

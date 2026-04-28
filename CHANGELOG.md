@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7] — 2026-04-28
+
+### Corregido
+- Recomendador: el paywall ya no queda bloqueado permanentemente — al expirar el TTL de Redis (12h), se limpia localStorage y se restauran las 3 consultas correctamente
+
+---
+
 ## [0.1.6] — 2026-03-20
 
 ### Agregado
