@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.10] — 2026-04-28
+
+### Agregado
+- Página `/noticias/tech`: resumen diario tech alimentado por n8n + Claude vía Redis (`noticias:tech`)
+- Componente `NoticiasTabNav`: tab nav compartido entre `/noticias` y `/noticias/tech` con acento emerald/indigo respectivamente
+- Workflow n8n `tech_summary_v2.json`: misma pipeline que news_summary_v2 pero con fuentes tech (HN, dev.to, GitHub Blog, Next.js, TechCrunch) — corre a las 9:30am diario
+
+### Cambiado
+- Página `/noticias`: ahora incluye `NoticiasTabNav active="general"` debajo del top nav
+
+---
+
 ## [0.1.9] — 2026-04-28
 
 ### Cambiado

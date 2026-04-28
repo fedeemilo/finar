@@ -1,6 +1,6 @@
 {
   "name": "finar",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Asesor financiero para argentinos potenciado por IA",
   "private": true,
   "scripts": {
