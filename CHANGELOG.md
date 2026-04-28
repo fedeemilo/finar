@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.9] — 2026-04-28
+
+### Cambiado
+- Página `/noticias`: rediseño editorial completo — layout max-w-7xl, hero full-width con gradient overlay, grid 2 columnas para noticias secundarias, sidebar de conclusión, tipografía de diario
+- Página `/noticias`: ThemeToggle agregado en navbar superior
+- Página `/noticias`: contraste de texto mejorado en light mode (zinc-400 → zinc-500/600 en textos secundarios, zinc-300 → zinc-500 en créditos)
+
+---
+
 ## [0.1.8] — 2026-04-28
 
 ### Agregado

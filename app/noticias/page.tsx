@@ -1,7 +1,8 @@
 import { getCached } from "@/lib/redis";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, TrendingUp, Zap, Newspaper } from "lucide-react";
+import { ArrowLeft, ExternalLink, Zap, Newspaper, Clock } from "lucide-react";
 import { NoticiaImagenFallback } from "@/components/NoticiaImagenFallback";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -34,13 +35,13 @@ function formatFecha(dateStr: string): string {
 
 function EmptyState() {
   return (
-    <div className="min-h-screen bg-stone-50 dark:bg-zinc-950 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-white dark:bg-zinc-950 flex items-center justify-center px-4">
       <div className="text-center max-w-sm">
-        <Newspaper size={48} className="mx-auto mb-4 text-stone-300 dark:text-zinc-600" strokeWidth={1.5} />
-        <h2 className="text-xl font-bold text-stone-700 dark:text-zinc-300 mb-2">
+        <Newspaper size={48} className="mx-auto mb-4 text-zinc-300 dark:text-zinc-700" strokeWidth={1.5} />
+        <h2 className="text-xl font-bold text-zinc-800 dark:text-zinc-200 mb-2">
           Todavía no hay noticias hoy
         </h2>
-        <p className="text-stone-500 dark:text-zinc-500 text-sm leading-relaxed mb-6">
+        <p className="text-zinc-500 dark:text-zinc-500 text-sm leading-relaxed mb-6">
           El resumen diario se genera a las 9am. Volvé más tarde.
         </p>
         <Link
@@ -57,140 +58,205 @@ function EmptyState() {
 
 export default async function NoticiasPage() {
   const data = await getCached<NoticiasData>("noticias:diarias");
-
   if (!data) return <EmptyState />;
 
+  const [hero, ...secondary] = data.top3;
   const fechaLegible = formatFecha(data.fecha);
 
   return (
-    <div className="min-h-screen bg-stone-50 dark:bg-zinc-950">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-stone-50/90 dark:bg-zinc-950/90 backdrop-blur-xl border-b border-stone-200 dark:border-zinc-800">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div className="min-h-screen bg-white dark:bg-zinc-950">
+
+      {/* ── Top nav ── */}
+      <div className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <Link
             href="/"
-            className="flex items-center gap-1.5 text-stone-500 dark:text-zinc-400 hover:text-stone-800 dark:hover:text-zinc-200 transition-colors text-sm font-medium"
+            className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors text-sm font-medium"
           >
-            <ArrowLeft size={15} />
+            <ArrowLeft size={14} />
             FinAR
           </Link>
-          <span className="text-stone-400 dark:text-zinc-600 text-xs capitalize">{fechaLegible}</span>
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-1.5 text-zinc-500 dark:text-zinc-500 text-xs">
+              <Clock size={11} />
+              <span>Actualizado 9am</span>
+            </div>
+            <ThemeToggle />
+          </div>
         </div>
-      </header>
+      </div>
 
-      <main className="max-w-4xl mx-auto px-4 py-10 space-y-10">
-
-        {/* Hero */}
-        <section>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-[10px] font-bold tracking-widest uppercase text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-400/10 px-2 py-1 rounded-full">
-              Resumen diario
-            </span>
-            <span className="text-stone-400 dark:text-zinc-600 text-xs">· 9am</span>
+      {/* ── Masthead editorial ── */}
+      <div className="border-b-[3px] border-zinc-900 dark:border-white bg-white dark:bg-zinc-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-zinc-900 dark:text-white leading-none">
+              El día en noticias
+            </h1>
+            <p className="text-zinc-500 dark:text-zinc-500 text-sm mt-2 capitalize">{fechaLegible}</p>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black text-stone-900 dark:text-zinc-100 tracking-tight leading-tight mb-6">
-            El día en noticias
-          </h1>
-
-          {/* Resumen ejecutivo */}
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-stone-200 dark:border-zinc-800 p-6 shadow-sm">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-stone-400 dark:text-zinc-500 mb-3">
-              Resumen ejecutivo
-            </p>
-            <p className="text-stone-700 dark:text-zinc-300 text-base sm:text-lg leading-relaxed font-medium">
-              {data.resumen}
-            </p>
+          <div className="hidden sm:block text-right text-xs text-zinc-500 dark:text-zinc-500 leading-relaxed flex-shrink-0">
+            <p className="font-medium text-zinc-700 dark:text-zinc-300">5 fuentes · Análisis IA</p>
+            <p>LN · Ámbito · BBC · Perfil · Clarín</p>
           </div>
+        </div>
+      </div>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+
+        {/* ── HERO: primera noticia, formato portada ── */}
+        <section className="mb-10">
+          <a
+            href={hero.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group block"
+          >
+            <div className="relative h-[340px] sm:h-[500px] overflow-hidden bg-zinc-800">
+              <div className="absolute inset-0">
+                <NoticiaImagenFallback
+                  imagen={hero.imagen}
+                  titulo={hero.titulo}
+                  fuente={hero.fuente}
+                />
+              </div>
+              {/* Gradient overlay — más denso abajo para legibilidad */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-black/10" />
+              <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
+                <span className="inline-block bg-emerald-500 text-white text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 mb-4">
+                  {hero.fuente}
+                </span>
+                <h2 className="text-white text-2xl sm:text-4xl font-black leading-tight mb-3 group-hover:text-emerald-300 transition-colors duration-200 max-w-4xl">
+                  {hero.titulo}
+                </h2>
+                <p className="text-white/80 text-sm sm:text-base leading-relaxed max-w-3xl line-clamp-2 sm:line-clamp-3">
+                  {hero.descripcion}
+                </p>
+                <div className="flex items-center gap-1.5 mt-5 text-white/50 text-xs">
+                  <ExternalLink size={11} />
+                  <span>Leer nota completa</span>
+                </div>
+              </div>
+            </div>
+          </a>
         </section>
 
-        {/* Top 3 noticias */}
-        <section>
-          <h2 className="text-[10px] font-bold tracking-widest uppercase text-stone-400 dark:text-zinc-500 mb-4">
-            Las 3 más importantes
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {data.top3.map((noticia, i) => (
-              <a
-                key={i}
-                href={noticia.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group bg-white dark:bg-zinc-900 rounded-2xl border border-stone-200 dark:border-zinc-800 overflow-hidden shadow-sm hover:shadow-md hover:border-stone-300 dark:hover:border-zinc-700 transition-all duration-200 flex flex-col"
-              >
-                {/* Imagen */}
-                <div className="h-44 overflow-hidden flex-shrink-0">
+        {/* ── NOTICIAS SECUNDARIAS: grid 2 columnas ── */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 gap-8 pb-10 mb-10 border-b border-zinc-200 dark:border-zinc-800">
+          {secondary.map((noticia, i) => (
+            <a
+              key={i}
+              href={noticia.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex flex-col"
+            >
+              <div className="h-52 overflow-hidden bg-zinc-100 dark:bg-zinc-800 mb-4 flex-shrink-0">
+                <div className="w-full h-full transition-transform duration-300 group-hover:scale-[1.03]">
                   <NoticiaImagenFallback
                     imagen={noticia.imagen}
                     titulo={noticia.titulo}
                     fuente={noticia.fuente}
                   />
                 </div>
-
-                {/* Contenido */}
-                <div className="p-4 flex flex-col flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-semibold tracking-wide uppercase text-stone-400 dark:text-zinc-500">
-                      {noticia.fuente}
-                    </span>
-                    <ExternalLink
-                      size={12}
-                      className="text-stone-300 dark:text-zinc-600 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors"
-                    />
-                  </div>
-                  <h3 className="text-stone-900 dark:text-zinc-100 font-bold text-sm leading-snug mb-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
-                    {noticia.titulo}
-                  </h3>
-                  <p className="text-stone-500 dark:text-zinc-400 text-xs leading-relaxed flex-1">
-                    {noticia.descripcion}
-                  </p>
-                </div>
-              </a>
-            ))}
-          </div>
-        </section>
-
-        {/* Tendencias */}
-        <section>
-          <h2 className="text-[10px] font-bold tracking-widest uppercase text-stone-400 dark:text-zinc-500 mb-4">
-            Tendencias del día
-          </h2>
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-stone-200 dark:border-zinc-800 shadow-sm divide-y divide-stone-100 dark:divide-zinc-800">
-            {data.tendencias.map((tendencia, i) => (
-              <div key={i} className="flex items-start gap-3 p-4">
-                <TrendingUp
-                  size={15}
-                  className="text-emerald-500 dark:text-emerald-400 mt-0.5 flex-shrink-0"
-                />
-                <p className="text-stone-600 dark:text-zinc-400 text-sm leading-relaxed">
-                  {tendencia}
-                </p>
               </div>
-            ))}
-          </div>
+
+              <span className="text-[10px] font-bold tracking-widest uppercase text-emerald-600 dark:text-emerald-400 mb-2">
+                {noticia.fuente}
+              </span>
+
+              <h3 className="text-zinc-900 dark:text-white font-bold text-xl leading-snug mb-3 group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors duration-200">
+                {noticia.titulo}
+              </h3>
+
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed flex-1">
+                {noticia.descripcion}
+              </p>
+
+              <div className="flex items-center gap-1.5 mt-4 text-zinc-500 dark:text-zinc-500 text-xs">
+                <ExternalLink size={11} />
+                <span>Leer nota completa</span>
+              </div>
+            </a>
+          ))}
         </section>
 
-        {/* Conclusión */}
-        <section>
-          <div className="bg-zinc-900 dark:bg-zinc-800 rounded-2xl p-6 flex gap-4">
-            <Zap size={20} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+        {/* ── BLOQUE INFERIOR: resumen + tendencias + conclusión ── */}
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-12">
+
+          {/* Columna principal */}
+          <div className="lg:col-span-2 space-y-10">
+
+            {/* Resumen ejecutivo */}
             <div>
-              <p className="text-[10px] font-bold tracking-widest uppercase text-zinc-500 mb-2">
-                Conclusión clave
+              <h2 className="text-[10px] font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-500 pb-2 mb-4 border-b-2 border-zinc-900 dark:border-white">
+                Resumen ejecutivo
+              </h2>
+              <p className="text-zinc-700 dark:text-zinc-300 text-lg leading-relaxed">
+                {data.resumen}
               </p>
-              <p className="text-zinc-100 font-semibold text-base leading-relaxed">
+            </div>
+
+            {/* Tendencias */}
+            <div>
+              <h2 className="text-[10px] font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-500 pb-2 mb-6 border-b-2 border-zinc-900 dark:border-white">
+                Tendencias del día
+              </h2>
+              <div className="space-y-6">
+                {data.tendencias.map((tendencia, i) => (
+                  <div key={i} className="flex gap-5 items-start">
+                    {/* Número decorativo — ghost element intencional en ambos modos */}
+                    <span className="text-5xl font-black text-zinc-200 dark:text-zinc-800 leading-none flex-shrink-0 select-none w-10 text-right">
+                      {i + 1}
+                    </span>
+                    <p className="text-zinc-700 dark:text-zinc-300 text-sm leading-relaxed pt-2">
+                      {tendencia}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar: conclusión + créditos */}
+          <div className="lg:border-l lg:border-zinc-200 lg:dark:border-zinc-800 lg:pl-10">
+            <h2 className="text-[10px] font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-500 pb-2 mb-4 border-b-2 border-zinc-900 dark:border-white">
+              Conclusión clave
+            </h2>
+
+            <div className="bg-zinc-900 dark:bg-zinc-800 p-6">
+              <Zap size={18} className="text-emerald-400 mb-4" />
+              <p className="text-white font-semibold text-base leading-relaxed">
                 {data.conclusion}
+              </p>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-zinc-200 dark:border-zinc-800 space-y-2">
+              <p className="text-zinc-500 dark:text-zinc-500 text-xs leading-relaxed">
+                Resumen generado diariamente con Claude Opus. Fuentes: La Nación, Ámbito Financiero, BBC Mundo, Perfil y Clarín.
+              </p>
+              <p className="text-zinc-500 dark:text-zinc-600 text-xs leading-relaxed">
+                FinAR no es un medio de comunicación. Este análisis es generado por IA y puede contener errores.
               </p>
             </div>
           </div>
         </section>
-
-        {/* Footer */}
-        <footer className="text-center pb-6">
-          <p className="text-stone-400 dark:text-zinc-600 text-xs">
-            Resumen generado automáticamente con Claude · Fuentes: La Nación, Ámbito, BBC Mundo, Perfil, Clarín
-          </p>
-        </footer>
       </main>
+
+      {/* ── Footer ── */}
+      <div className="border-t-[3px] border-zinc-900 dark:border-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between">
+          <Link
+            href="/"
+            className="text-zinc-600 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors text-sm font-medium"
+          >
+            ← Volver a FinAR
+          </Link>
+          <span className="text-zinc-500 dark:text-zinc-500 text-xs capitalize">
+            {fechaLegible}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
