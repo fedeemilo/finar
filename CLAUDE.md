@@ -4,7 +4,7 @@
 
 FinAR es un asesor financiero para argentinos. Responde "¿En qué me conviene invertir hoy?" usando Claude como analista de mercado real, cotizaciones en tiempo real y noticias económicas.
 
-URL producción: (pendiente — ver README)
+URL producción: https://finar.fedmilo.com
 Repo: https://github.com/fedeemilo/finar
 
 ---

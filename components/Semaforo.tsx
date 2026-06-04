@@ -1,8 +1,21 @@
 import { Brain } from "lucide-react";
 import { AssetCard } from "./AssetCard";
-import type { AnalisisResponse } from "@/lib/analisis";
+import type { AnalisisResponse, AnalisisActivo } from "@/lib/analisis";
 
-export function Semaforo({ analisis }: { analisis: AnalisisResponse | null }) {
+export interface HistoricoData {
+  activos: Record<string, AnalisisActivo>;
+  capturedAt: string;
+}
+
+export function Semaforo({
+  analisis,
+  historico,
+  historiales,
+}: {
+  analisis: AnalisisResponse | null;
+  historico?: HistoricoData | null;
+  historiales?: Record<string, number[]>;
+}) {
   if (!analisis || analisis.activos.length === 0) {
     return (
       <div className="rounded-2xl border border-black/[0.12] dark:border-white/5 bg-white/70 dark:bg-white/[0.02] p-6 text-center">
@@ -32,9 +45,22 @@ export function Semaforo({ analisis }: { analisis: AnalisisResponse | null }) {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
-        {analisis.activos.map((activo) => (
-          <AssetCard key={activo.id} data={activo} />
-        ))}
+        {analisis.activos.map((activo) => {
+          const historicoActivo = historico?.activos[activo.id];
+          const historicoProp =
+            historicoActivo && historico
+              ? { activo: historicoActivo, capturedAt: historico.capturedAt }
+              : undefined;
+          const historialPrecio = historiales?.[activo.id];
+          return (
+            <AssetCard
+              key={activo.id}
+              data={activo}
+              historico={historicoProp}
+              historialPrecio={historialPrecio}
+            />
+          );
+        })}
       </div>
     </div>
   );

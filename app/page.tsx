@@ -4,8 +4,16 @@ import { NoticiasSection } from "@/components/NoticiasSection";
 import { Recomendador } from "@/components/Recomendador";
 import { GlosarioTooltip } from "@/components/GlosarioTooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ArchivoChips } from "@/components/ArchivoChips";
+import { ShareButton } from "@/components/ShareButton";
 import { Newspaper } from "lucide-react";
 import { getCached, setCache } from "@/lib/redis";
+import {
+  loadAvailableDates,
+  loadSnapshotHaceDias,
+  loadLatestAnalisisId,
+  loadCotizacionesHistorial,
+} from "@/lib/db";
 import {
   generarAnalisis,
   CACHE_KEY as ANALISIS_CACHE,
@@ -13,6 +21,7 @@ import {
   TTL as ANALISIS_TTL,
   STALE_TTL as ANALISIS_STALE_TTL,
   type AnalisisResponse,
+  type AnalisisActivo,
 } from "@/lib/analisis";
 import {
   generarNoticias,
@@ -82,8 +91,61 @@ function LastUpdated({ timestamp }: { timestamp?: string }) {
   );
 }
 
+async function loadFechasArchivo(): Promise<string[]> {
+  try {
+    return await loadAvailableDates(7);
+  } catch (err) {
+    console.error("Home: load de fechas de archivo falló (BD no disponible?)", err);
+    return [];
+  }
+}
+
+async function loadHistoricoSemana(): Promise<
+  | { activos: Record<string, AnalisisActivo>; capturedAt: string }
+  | null
+> {
+  try {
+    const snap = await loadSnapshotHaceDias<AnalisisResponse>("analisis", 7);
+    if (!snap) return null;
+    const activos = Object.fromEntries(snap.payload.activos.map((a) => [a.id, a]));
+    return { activos, capturedAt: snap.capturedAt };
+  } catch (err) {
+    console.error("Home: load del histórico de 7d falló", err);
+    return null;
+  }
+}
+
+async function loadSnapId(): Promise<number | null> {
+  try {
+    return await loadLatestAnalisisId();
+  } catch (err) {
+    console.error("Home: load del último snapshot ID falló", err);
+    return null;
+  }
+}
+
+async function loadHistorialBlue(): Promise<number[]> {
+  try {
+    return await loadCotizacionesHistorial("blue_venta", 30);
+  } catch (err) {
+    console.error("Home: load del historial del Blue falló", err);
+    return [];
+  }
+}
+
 export default async function Home() {
-  const [analisis, noticias] = await Promise.all([loadAnalisis(), loadNoticias()]);
+  const [analisis, noticias, fechasArchivo, historico, snapId, historialBlue] =
+    await Promise.all([
+      loadAnalisis(),
+      loadNoticias(),
+      loadFechasArchivo(),
+      loadHistoricoSemana(),
+      loadSnapId(),
+      loadHistorialBlue(),
+    ]);
+
+  const historiales: Record<string, number[]> = {};
+  if (historialBlue.length >= 2) historiales.blue = historialBlue;
 
   return (
     <div
@@ -154,8 +216,9 @@ export default async function Home() {
               <span className="w-2 h-2 rounded-full bg-amber-400" />
               <span className="w-2 h-2 rounded-full bg-red-400" />
             </div>
+            {snapId && <ShareButton snapId={snapId} />}
           </div>
-          <Semaforo analisis={analisis} />
+          <Semaforo analisis={analisis} historico={historico} historiales={historiales} />
         </section>
 
         {/* Divider */}
@@ -185,6 +248,9 @@ export default async function Home() {
           </p>
           <NoticiasSection noticias={noticias} />
         </section>
+
+        {/* Archivo histórico */}
+        <ArchivoChips fechas={fechasArchivo} />
 
         {/* Glosario CTA */}
         <section className="rounded-2xl border border-black/[0.12] dark:border-white/5 bg-white/70 dark:bg-white/[0.02] p-6 text-center">

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { GlosarioTooltip } from "./GlosarioTooltip";
+import { Sparkline } from "./Sparkline";
 import {
   ChevronDown,
   ArrowRightLeft,
@@ -10,6 +11,8 @@ import {
   Globe,
   Bitcoin,
   Gem,
+  TrendingUp,
+  TrendingDown,
   type LucideIcon,
 } from "lucide-react";
 
@@ -20,6 +23,18 @@ export interface AssetCardData {
   status: SemaforoStatus;
   veredicto: string;
   porque: string;
+}
+
+export interface AssetHistorico {
+  activo: { status: SemaforoStatus; veredicto: string };
+  capturedAt: string;
+}
+
+const STATUS_RANK: Record<SemaforoStatus, number> = { red: 1, yellow: 2, green: 3 };
+
+function daysSince(iso: string): number {
+  const ms = Date.now() - new Date(iso).getTime();
+  return Math.max(1, Math.round(ms / 86400000));
 }
 
 const ASSET_META: Record<string, { nombre: string; icono: LucideIcon; glosarioTerm?: string }> = {
@@ -58,11 +73,24 @@ const STATUS_CONFIG = {
   },
 };
 
-export function AssetCard({ data }: { data: AssetCardData }) {
+export function AssetCard({
+  data,
+  historico,
+  historialPrecio,
+}: {
+  data: AssetCardData;
+  historico?: AssetHistorico;
+  historialPrecio?: number[];
+}) {
   const [expanded, setExpanded] = useState(false);
   const config = STATUS_CONFIG[data.status];
   const meta = ASSET_META[data.id] ?? { nombre: data.id, icono: Banknote };
   const Icono = meta.icono;
+
+  // Cálculo de cambio histórico — solo se renderiza si hay snapshot de hace N días
+  const historicoConfig = historico ? STATUS_CONFIG[historico.activo.status] : null;
+  const historicoDias = historico ? daysSince(historico.capturedAt) : 0;
+  const trendDiff = historico ? STATUS_RANK[data.status] - STATUS_RANK[historico.activo.status] : 0;
 
   return (
     <button
@@ -107,6 +135,13 @@ export function AssetCard({ data }: { data: AssetCardData }) {
           <p className="text-gray-600 dark:text-white/60 text-sm leading-relaxed">
             {data.veredicto}
           </p>
+
+          {/* Sparkline (solo si vienen datos históricos suficientes) */}
+          {historialPrecio && historialPrecio.length >= 2 && (
+            <div className="mt-3">
+              <Sparkline points={historialPrecio} />
+            </div>
+          )}
         </div>
 
         {/* Chevron */}
@@ -120,8 +155,8 @@ export function AssetCard({ data }: { data: AssetCardData }) {
 
       {/* Expanded content */}
       <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${
-          expanded ? "max-h-60 opacity-100 mt-4" : "max-h-0 opacity-0"
+        className={`overflow-hidden transition-all duration-500 ease-in-out ${
+          expanded ? "max-h-[28rem] opacity-100 mt-4" : "max-h-0 opacity-0"
         }`}
       >
         <div className={`border-t ${config.cardBorder} pt-4`}>
@@ -131,6 +166,35 @@ export function AssetCard({ data }: { data: AssetCardData }) {
           <div className="max-h-36 overflow-y-auto pr-1">
             <p className="text-gray-700 dark:text-white/70 text-sm leading-relaxed">{data.porque}</p>
           </div>
+
+          {historico && historicoConfig && (
+            <div className="mt-4 pt-3 border-t border-black/[0.07] dark:border-white/[0.07]">
+              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                <p className="text-[10px] text-gray-500 dark:text-white/40 uppercase tracking-wider font-medium">
+                  Hace {historicoDias} {historicoDias === 1 ? "día" : "días"}
+                </p>
+                <span className={`relative inline-block h-1.5 w-1.5 rounded-full ${historicoConfig.color}`} />
+                <span className={`text-[11px] font-medium ${historicoConfig.text}`}>
+                  {historicoConfig.label}
+                </span>
+                {trendDiff > 0 && (
+                  <span className="ml-auto flex items-center gap-0.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                    <TrendingUp size={10} strokeWidth={2.5} />
+                    mejoró
+                  </span>
+                )}
+                {trendDiff < 0 && (
+                  <span className="ml-auto flex items-center gap-0.5 text-[10px] text-red-500 dark:text-red-400 font-medium">
+                    <TrendingDown size={10} strokeWidth={2.5} />
+                    empeoró
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-600 dark:text-white/50 italic leading-relaxed">
+                &ldquo;{historico.activo.veredicto}&rdquo;
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </button>

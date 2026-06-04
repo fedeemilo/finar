@@ -312,7 +312,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Reconstruir el objeto data inyectando las imágenes scrapeadas\nconst imageResults = $input.first().json.imageResults;\n\n// Todos los items tienen el mismo dataStr (los datos originales de Claude)\nconst data = JSON.parse(imageResults[0].dataStr);\n\n// Inyectar imágenes por índice\nimageResults.forEach(result => {\n  if (result.ogImage) {\n    data.top3[result.scrapeIndex].imagen = result.ogImage;\n  }\n});\n\n// Preparar body para Upstash\nconst payload = JSON.stringify(data);\nconst upstashBody = JSON.stringify(['SET', 'noticias:diarias', payload, 'EX', '90000']);\n\nreturn [{ json: { upstashBody, fecha: data.fecha } }];"
+        "jsCode": "// Reconstruir el objeto data inyectando las imágenes scrapeadas\nconst imageResults = $input.first().json.imageResults;\n\n// Todos los items tienen el mismo dataStr (los datos originales de Claude)\nconst data = JSON.parse(imageResults[0].dataStr);\n\n// Inyectar imágenes por índice\nimageResults.forEach(result => {\n  if (result.ogImage) {\n    data.top3[result.scrapeIndex].imagen = result.ogImage;\n  }\n});\n\n// Preparar body para Upstash\nconst payload = JSON.stringify(data);\nconst upstashBody = JSON.stringify(['SET', 'noticias:diarias', payload, 'EX', '90000']);\n\n// Preparar body para BD Postgres (snapshot histórico)\nconst snapshotBody = JSON.stringify({ kind: 'noticias-diarias', payload: data });\n\nreturn [{ json: { upstashBody, snapshotBody, fecha: data.fecha } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -355,6 +355,37 @@
           "name": "Upstash Redis REST"
         }
       }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://finar.fedmilo.com/api/snapshot/save",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REEMPLAZAR_CRON_SECRET"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $('Reconstruir con imágenes').first().json.snapshotBody }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        -1024
+      ],
+      "id": "c0f1e2d3-4444-4eee-8000-000000000003",
+      "name": "Guardar snapshot en BD",
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -725,6 +756,17 @@
         [
           {
             "node": "Guardar en Upstash Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar en Upstash Redis": {
+      "main": [
+        [
+          {
+            "node": "Guardar snapshot en BD",
             "type": "main",
             "index": 0
           }
