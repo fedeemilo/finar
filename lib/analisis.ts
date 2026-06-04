@@ -160,8 +160,12 @@ Respondé ÚNICAMENTE con un JSON válido con esta estructura exacta, sin markdo
   const finalMessage = await stream.finalMessage();
   const text = finalMessage.content.find((b) => b.type === "text")?.text ?? "";
 
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error("Claude no devolvió JSON válido");
+  const cleaned = text.replace(/```(?:json)?\s*/gi, "").replace(/```/g, "").trim();
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    console.error("Análisis: respuesta sin objeto JSON. Raw (500 chars):", text.slice(0, 500));
+    throw new Error("Claude no devolvió JSON válido");
+  }
 
   const parsed = JSON.parse(jsonMatch[0]) as { activos: AnalisisActivo[]; contexto: string };
 

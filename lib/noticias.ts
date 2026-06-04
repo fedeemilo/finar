@@ -40,7 +40,7 @@ export async function generarNoticias(): Promise<Noticia[]> {
     .join("\n");
 
   const stream = anthropic.messages.stream({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 2000,
     system: SYSTEM_PROMPT,
     messages: [
@@ -58,7 +58,7 @@ CRITERIOS DE SELECCIÓN (orden de prioridad):
 5. Cripto con relevancia para el contexto argentino
 6. Descartá: política sin impacto económico directo, deportes, farándula, policiales
 
-FORMATO DE RESPUESTA — array JSON con esta estructura exacta por ítem:
+Respondé ÚNICAMENTE con un array JSON válido, sin markdown, sin bloques \`\`\`, sin texto antes ni después. Cada ítem con esta estructura exacta:
 {
   "id": número del 1 al 5,
   "titulo": "título en español, máximo 10 palabras, sin clickbait",
@@ -74,10 +74,14 @@ ${articlesText}`,
   });
 
   const finalMessage = await stream.finalMessage();
-  const text = finalMessage.content.find((b) => b.type === "text")?.text ?? "[]";
+  const text = finalMessage.content.find((b) => b.type === "text")?.text ?? "";
 
-  const jsonMatch = text.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) throw new Error("Claude no devolvió JSON válido");
+  const cleaned = text.replace(/```(?:json)?\s*/gi, "").replace(/```/g, "").trim();
+  const jsonMatch = cleaned.match(/\[[\s\S]*\]/);
+  if (!jsonMatch) {
+    console.error("Noticias: respuesta sin array JSON. Raw (500 chars):", text.slice(0, 500));
+    throw new Error("Claude no devolvió JSON válido");
+  }
   const parsed = JSON.parse(jsonMatch[0]) as Array<Omit<Noticia, "url" | "fuente"> & { id: number | string }>;
 
   return parsed.map((n, i) => {
