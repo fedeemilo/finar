@@ -6,23 +6,24 @@ import {
   STALE_KEY,
   TTL,
   STALE_TTL,
+  type AnalisisResponse,
 } from "@/lib/analisis";
 
 export type { AnalisisActivo, AnalisisResponse } from "@/lib/analisis";
 
 export async function GET() {
   // 1. Caché fresca → respuesta instantánea (caso más común)
-  const cached = await getCached<Awaited<ReturnType<typeof generarAnalisis>>>(CACHE_KEY);
+  const cached = await getCached<AnalisisResponse>(CACHE_KEY);
   if (cached) return NextResponse.json(cached);
 
   // 2. Caché vencida pero hay datos viejos → respuesta instantánea con badge "stale"
   //    El cron en /api/analisis/revalidate se encarga de mantener el caché caliente
-  const stale = await getCached<Awaited<ReturnType<typeof generarAnalisis>>>(STALE_KEY);
+  const stale = await getCached<AnalisisResponse>(STALE_KEY);
   if (stale) return NextResponse.json({ ...stale, stale: true });
 
   // 3. Sin datos (primer arranque o stale expirado) → esperar a Claude
   try {
-    const analisis = await generarAnalisis();
+    const { analisis } = await generarAnalisis();
     await Promise.all([
       setCache(CACHE_KEY, analisis, TTL),
       setCache(STALE_KEY, analisis, STALE_TTL),

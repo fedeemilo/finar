@@ -1,5 +1,5 @@
 import { anthropic } from "@/lib/claude";
-import { fetchCotizaciones } from "@/lib/cotizaciones";
+import { fetchCotizaciones, type Cotizaciones } from "@/lib/cotizaciones";
 import { fetchAllFeeds } from "@/lib/rss";
 
 export const CACHE_KEY = "analisis:semaforo";
@@ -87,7 +87,10 @@ async function fetchNoticias(): Promise<string> {
   }
 }
 
-export async function generarAnalisis(): Promise<AnalisisResponse> {
+export async function generarAnalisis(): Promise<{
+  analisis: AnalisisResponse;
+  cotizaciones: Cotizaciones;
+}> {
   const [cotiz, noticias] = await Promise.all([
     fetchCotizaciones(),
     fetchNoticias(),
@@ -170,8 +173,11 @@ Respondé ÚNICAMENTE con un JSON válido con esta estructura exacta, sin markdo
   const parsed = JSON.parse(jsonMatch[0]) as { activos: AnalisisActivo[]; contexto: string };
 
   return {
-    activos: parsed.activos,
-    contexto: parsed.contexto,
-    timestamp: new Date().toISOString(),
+    analisis: {
+      activos: parsed.activos,
+      contexto: parsed.contexto,
+      timestamp: new Date().toISOString(),
+    },
+    cotizaciones: cotiz,
   };
 }

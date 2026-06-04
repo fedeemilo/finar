@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generarNoticias, CACHE_KEY, STALE_KEY, TTL, STALE_TTL } from "@/lib/noticias";
 import { setCache } from "@/lib/redis";
+import { saveSnapshot } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -16,10 +17,18 @@ export async function GET(req: NextRequest) {
 
   try {
     const noticias = await generarNoticias();
+
     await Promise.all([
       setCache(CACHE_KEY, noticias, TTL),
       setCache(STALE_KEY, noticias, STALE_TTL),
     ]);
+
+    // Snapshot a Postgres — best-effort
+    const dbResult = await Promise.allSettled([saveSnapshot("noticias-home", noticias)]);
+    if (dbResult[0].status === "rejected") {
+      console.error("BD write snapshot (noticias-home) falló:", dbResult[0].reason);
+    }
+
     return NextResponse.json({ ok: true, count: noticias.length, timestamp: new Date().toISOString() });
   } catch (err) {
     console.error("Error en revalidación de noticias:", err);

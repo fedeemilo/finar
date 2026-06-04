@@ -33,7 +33,7 @@ async function loadAnalisis(): Promise<AnalisisResponse | null> {
   if (stale) return { ...stale, stale: true };
 
   try {
-    const analisis = await generarAnalisis();
+    const { analisis } = await generarAnalisis();
     await Promise.all([
       setCache(ANALISIS_CACHE, analisis, ANALISIS_TTL),
       setCache(ANALISIS_STALE, analisis, ANALISIS_STALE_TTL),
