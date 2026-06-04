@@ -7,105 +7,113 @@ const CACHE_KEY = "noticias:processed";
 const TTL = 60 * 60; // 1 hora
 
 export interface Noticia {
-  id: string;
-  titulo: string;
-  resumen: string;
-  queSIgnificaParaMi: string;
-  categoria: "Mundo" | "Argentina" | "Mercados";
-  url: string;
-  fuente: string;
+    id: string;
+    titulo: string;
+    resumen: string;
+    queSIgnificaParaMi: string;
+    categoria: "Mundo" | "Argentina" | "Mercados";
+    url: string;
+    fuente: string;
 }
 
 async function fetchAndProcessNoticias(): Promise<Noticia[]> {
-  const articles = await fetchAllFeeds();
+    const articles = await fetchAllFeeds();
 
-  if (articles.length === 0) return getMockNoticias();
+    if (articles.length === 0) return getMockNoticias();
 
-  // Pasamos los 20 más recientes a Claude para que seleccione los 5 mejores
-  const articlesText = articles
-    .slice(0, 20)
-    .map((a, i) => `${i + 1}. [${a.fuente}] ${a.titulo}${a.descripcion ? ` — ${a.descripcion.slice(0, 120)}` : ""}`)
-    .join("\n");
+    // Pasamos los 20 más recientes a Claude para que seleccione los 5 mejores
+    const articlesText = articles
+        .slice(0, 20)
+        .map((a, i) => `${i + 1}. [${a.fuente}] ${a.titulo}${a.descripcion ? ` — ${a.descripcion.slice(0, 120)}` : ""}`)
+        .join("\n");
 
-  const stream = anthropic.messages.stream({
-    model: "claude-haiku-4-5",
-    max_tokens: 2000,
-    system: SYSTEM_PROMPT,
-    messages: [
+    const stream = anthropic.messages.stream({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2000,
+        system: SYSTEM_PROMPT,
+        messages: [
+            {
+                role: "user",
+                content: `Tenés estas noticias del día de distintos medios argentinos e internacionales.
+      
+      TAREA: Seleccioná entre 3 y 5 noticias con mayor impacto para un inversor argentino. Si no encontrás 5 relevantes, devolvé las que haya (mínimo 3).
+      
+      CRITERIOS DE SELECCIÓN (orden de prioridad):
+      1. Dólar (blue, oficial, CCL, MEP), brecha cambiaria
+      2. Inflación, tasas de interés, política monetaria del BCRA
+      3. Reservas internacionales, deuda externa, acuerdos con FMI
+      4. Mercados financieros globales con impacto local (bonos, acciones, commodities)
+      5. Cripto con relevancia para el contexto argentino
+      6. Descartá: política sin impacto económico directo, deportes, farándula, policiales
+      
+      FORMATO DE RESPUESTA — array JSON con esta estructura exacta por ítem:
       {
-        role: "user",
-        content: `Tenés estas noticias de hoy de distintos medios argentinos e internacionales.
-
-Seleccioná las 5 que sean MÁS relevantes para alguien que quiere invertir en Argentina. Priorizá noticias sobre: dólar, inflación, tasas, economía argentina, mercados financieros, cripto, reservas del BCRA. Ignorá noticias de política pura, deportes, farándula o sociedad que no impacten en inversiones.
-
-Para cada noticia seleccionada, generá este JSON:
-- id: número del 1 al 5
-- titulo: título en español claro (máx 10 palabras)
-- resumen: 2 oraciones simples explicando la noticia
-- queSIgnificaParaMi: qué impacto concreto tiene para un inversor argentino (1 oración directa)
-- categoria: una de "Argentina", "Mundo" o "Mercados"
-
-Respondé SOLO con un array JSON válido, sin markdown ni texto extra.
-
-Noticias disponibles:
-${articlesText}`,
-      },
-    ],
-  });
-
-  const finalMessage = await stream.finalMessage();
-  const text = finalMessage.content.find((b) => b.type === "text")?.text ?? "[]";
-
-  try {
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) throw new Error("No JSON array found");
-    const parsed = JSON.parse(jsonMatch[0]);
-
-    return parsed.map((n: Omit<Noticia, "url" | "fuente"> & { id: number | string }, i: number) => {
-      // Buscar el artículo original por título aproximado
-      const original = articles.find((a) =>
-        a.titulo.toLowerCase().includes(
-          String(n.titulo).toLowerCase().slice(0, 20)
-        )
-      ) ?? articles[i];
-
-      return {
-        ...n,
-        id: String(n.id ?? i + 1),
-        url: original?.url ?? "#",
-        fuente: original?.fuente ?? "Fuente",
-      };
+        "id": número del 1 al 5,
+        "titulo": "título en español, máximo 10 palabras, sin clickbait",
+        "resumen": "dos oraciones que expliquen qué pasó y cuál es el dato clave",
+        "queSIgnificaParaMi": "una oración concreta sobre el impacto para un inversor argentino hoy",
+        "categoria": "Argentina" | "Mundo" | "Mercados"
+      }
+      
+      Noticias disponibles:
+      ${articlesText}`,
+            },
+        ],
     });
-  } catch {
-    return getMockNoticias();
-  }
+
+    const finalMessage = await stream.finalMessage();
+    const text = finalMessage.content.find((b) => b.type === "text")?.text ?? "[]";
+
+    try {
+        const jsonMatch = text.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) throw new Error("No JSON array found");
+        const parsed = JSON.parse(jsonMatch[0]);
+
+        return parsed.map((n: Omit<Noticia, "url" | "fuente"> & { id: number | string }, i: number) => {
+            // Buscar el artículo original por título aproximado
+            const original = articles.find((a) =>
+                a.titulo.toLowerCase().includes(
+                    String(n.titulo).toLowerCase().slice(0, 20)
+                )
+            ) ?? articles[i];
+
+            return {
+                ...n,
+                id: String(n.id ?? i + 1),
+                url: original?.url ?? "#",
+                fuente: original?.fuente ?? "Fuente",
+            };
+        });
+    } catch {
+        return getMockNoticias();
+    }
 }
 
 function getMockNoticias(): Noticia[] {
-  return [
-    {
-      id: "1",
-      titulo: "Actualizando noticias del día",
-      resumen: "Estamos obteniendo las noticias más recientes. Volvé en unos minutos para ver el análisis actualizado.",
-      queSIgnificaParaMi: "Las fuentes de noticias están siendo consultadas ahora mismo.",
-      categoria: "Argentina",
-      url: "#",
-      fuente: "FinAR",
-    },
-  ];
+    return [
+        {
+            id: "1",
+            titulo: "Actualizando noticias del día",
+            resumen: "Estamos obteniendo las noticias más recientes. Volvé en unos minutos para ver el análisis actualizado.",
+            queSIgnificaParaMi: "Las fuentes de noticias están siendo consultadas ahora mismo.",
+            categoria: "Argentina",
+            url: "#",
+            fuente: "FinAR",
+        },
+    ];
 }
 
 export async function GET() {
-  const cached = await getCached<Noticia[]>(CACHE_KEY);
-  if (cached) return NextResponse.json(cached);
+    const cached = await getCached<Noticia[]>(CACHE_KEY);
+    if (cached) return NextResponse.json(cached);
 
-  try {
-    const noticias = await fetchAndProcessNoticias();
-    await setCache(CACHE_KEY, noticias, TTL);
-    return NextResponse.json(noticias);
-  } catch {
-    const stale = await getCached<Noticia[]>(CACHE_KEY);
-    if (stale) return NextResponse.json(stale);
-    return NextResponse.json(getMockNoticias());
-  }
+    try {
+        const noticias = await fetchAndProcessNoticias();
+        await setCache(CACHE_KEY, noticias, TTL);
+        return NextResponse.json(noticias);
+    } catch {
+        const stale = await getCached<Noticia[]>(CACHE_KEY);
+        if (stale) return NextResponse.json(stale);
+        return NextResponse.json(getMockNoticias());
+    }
 }
