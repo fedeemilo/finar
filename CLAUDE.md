@@ -28,20 +28,22 @@ Repo: https://github.com/fedeemilo/finar
 
 ```
 app/
-  page.tsx                        — Página principal
-  layout.tsx                      — Font, TooltipProvider, FOUC prevention script
-  globals.css                     — Variables CSS dark/light theme, sin @import shadcn
-  admin/page.tsx                  — Dashboard de uso (protegido por ?key=)
-  noticias/page.tsx               — Página de noticias diarias (server component, lee Redis)
+  page.tsx                          — Página principal (async server component, lee Redis con fallback on-demand)
+  layout.tsx                        — Font, TooltipProvider, FOUC prevention script
+  globals.css                       — Variables CSS dark/light theme, sin @import shadcn
+  admin/page.tsx                    — Dashboard de uso (protegido por ?key=)
+  noticias/page.tsx                 — Página de noticias diarias (server component, lee Redis)
   api/
-    analisis/route.ts             — Sirve análisis con stale-while-revalidate (Sonnet, 30min fresh)
-    analisis/revalidate/route.ts  — Endpoint del Vercel Cron para regenerar análisis (cada 25min)
-    recomendar/route.ts           — Wizard de recomendación (Haiku, rate limit IP)
-    cotizaciones/route.ts         — Proxy Bluelytics (15min cache)
-    noticias/route.ts             — NewsAPI + Claude resumen (1h cache)
+    analisis/route.ts               — GET on-demand con stale-while-revalidate (fallback; no se llama desde el home ya)
+    analisis/revalidate/route.ts    — Endpoint con CRON_SECRET para que n8n regenere el cache
+    noticias/route.ts               — GET on-demand análogo al de analisis
+    noticias/revalidate/route.ts    — Endpoint con CRON_SECRET para que n8n regenere noticias
+    recomendar/route.ts             — Wizard de recomendación (Haiku, rate limit IP)
+    cotizaciones/route.ts           — Proxy Bluelytics (15min cache)
 
 lib/
   analisis.ts               — generarAnalisis(), constantes de cache, interfaces (NO en route.ts)
+  noticias.ts               — generarNoticias(), constantes de cache, Noticia interface (espejo de analisis.ts)
   claude.ts                 — Cliente Anthropic + SYSTEM_PROMPT
   redis.ts                  — Cliente Upstash + helpers getCached/setCache
   cotizaciones.ts           — Fetch api.bluelytics.com.ar/v2/latest
@@ -49,10 +51,10 @@ lib/
   constants.ts              — FREE_LIMIT, LIMIT_TTL_SECONDS (safe para client+server)
 
 components/
-  Semaforo.tsx                  — Grilla de activos con status Claude (Dólar Blue, no CCL)
-  AssetCard.tsx                 — Card expandible con dot animado e ícono Lucide
-  NoticiaCard.tsx               — Card de noticia con resumen + "Para vos"
-  NoticiasSection.tsx           — Sección de noticias con skeleton
+  Semaforo.tsx                  — Server component: recibe `analisis` prop, renderiza grilla (sin fetch propio)
+  AssetCard.tsx                 — Client component: contiene ASSET_META (íconos Lucide), maneja expansión
+  NoticiaCard.tsx               — Client component: card de noticia con "Para vos"
+  NoticiasSection.tsx           — Server component: recibe `noticias` prop (sin fetch propio)
   Recomendador.tsx              — Wizard 2 pasos + resultado + paywall
   ThemeToggle.tsx               — Toggle dark/light mode (sun/moon)
   GlosarioTooltip.tsx           — Tooltip con términos financieros
@@ -60,7 +62,10 @@ components/
   ui/                           — Componentes shadcn/base-ui
 
 n8n/
-  news_summary_v2.json      — Workflow n8n activo: RSS → Claude Opus → scraping og:image → Redis
+  news_summary_n8n.json              — Refresca `noticias:diarias` (Opus + scraping og:image), 2x/día (09:00 + 18:00 ARG)
+  tech_summary_n8n.json              — Refresca `noticias:tech`, 2x/día (09:30 + 18:30 ARG)
+  home_analisis_refresh_n8n.json     — Pega a `/api/analisis/revalidate` cada 4hs (03,07,11,15,19,23 ARG)
+  home_noticias_refresh_n8n.json     — Pega a `/api/noticias/revalidate` cada 4hs (mismas horas)
 ```
 
 ---
@@ -91,6 +96,8 @@ El proyecto usa Tailwind v3. NO agregar `@import "shadcn/tailwind.css"` ni impor
 
 ### Boundary server/client
 `lib/constants.ts` existe específicamente para exportar constantes que usan tanto routes de servidor como componentes cliente. NO importar desde archivos de route en componentes cliente (next/headers es server-only).
+
+**No pasar funciones/componentes React como props entre server → client.** Los íconos de `lucide-react` son funciones; si un server component los pasa como prop a un client component, RSC tira: *"Functions cannot be passed directly to Client Components"*. Patrón usado en [components/Semaforo.tsx](components/Semaforo.tsx) + [components/AssetCard.tsx](components/AssetCard.tsx): el server pasa solo data serializable (`{id, status, veredicto, porque}`) y el client mantiene su propio map `id → {nombre, icono, glosarioTerm}` (ASSET_META vive en `AssetCard.tsx`).
 
 ### Modelos Claude
 - `/api/analisis` → `claude-sonnet-4-6` (cold start ~6-10s, stale-while-revalidate cubre al usuario)
@@ -141,18 +148,41 @@ Ruta: `/admin?key={ADMIN_SECRET}`
 - Fondo de cards en light mode: `bg-white/80` (NO `bg-black/[0.04]` — es invisible sobre fondo crema)
 - Bordes en light mode: `border-black/[0.12]` (NO `border-black/[0.07]` — muy sutil)
 
-### Stale-while-revalidate para análisis
-- `CACHE_KEY` (`analisis:semaforo`) TTL 30 min — datos frescos
-- `STALE_KEY` (`analisis:semaforo:stale`) TTL 4 h — fallback si fresh expiró
-- Vercel Cron en `vercel.json` llama `/api/analisis/revalidate` cada 25 min
-- El endpoint GET `/api/analisis` sirve stale instantáneamente con `{ stale: true }` si fresh expiró
-- El cron borra el lock `REFRESH_LOCK` tras regenerar para evitar doble refresh simultáneo
+### Home server-rendered desde Redis
+A partir de v0.2.0 la home no fetchea desde el cliente. `app/page.tsx` es async server component que:
+1. Llama `loadAnalisis()` + `loadNoticias()` en `Promise.all`
+2. Cada loader: fresh cache → stale cache → fallback on-demand (genera con Claude + escribe Redis)
+3. Pasa la data como prop a `<Semaforo analisis={...} />` y `<NoticiasSection noticias={...} />`
+
+El HTML llega con contenido en el primer paint — sin skeletons. Si los workflows n8n de refresh están corriendo, el fallback on-demand casi nunca se ejecuta (Redis siempre tiene fresh). Si Redis está vacío Y Claude falla, se renderiza un mensaje "no se pudo cargar" inline (no EmptyState — el home tiene que tener contenido).
+
+`force-dynamic` en page.tsx evita que Next.js intente cachear el HTML.
+
+`LastUpdated` del header usa el `timestamp` del análisis con `timeZone: "America/Argentina/Buenos_Aires"` fijo — consistente entre server y client, sin hydration mismatch.
+
+### Stale-while-revalidate (análisis + noticias)
+Mismo patrón para los 2 endpoints del home:
+
+| | Análisis | Noticias |
+|---|---|---|
+| Fresh key | `analisis:semaforo` | `noticias:processed` |
+| Fresh TTL | 30 min | 1 h |
+| Stale key | `analisis:semaforo:stale` | `noticias:processed:stale` |
+| Stale TTL | 4 h | 6 h |
+| Revalidate endpoint | `/api/analisis/revalidate` | `/api/noticias/revalidate` |
+| Cron n8n | `home_analisis_refresh_n8n.json` | `home_noticias_refresh_n8n.json` |
+| Frecuencia | cada 4hs (03,07,11,15,19,23 ARG) | misma |
+
+- Ambos `/revalidate` requieren `Authorization: Bearer ${CRON_SECRET}` si la env var está seteada
+- El home (`app/page.tsx`) y los GET `/api/*` siempre sirven stale instantáneamente si fresh expiró
+- El cron borra el lock `REFRESH_LOCK` tras regenerar análisis para evitar doble refresh simultáneo (noticias no tiene lock — corre rápido)
 - **NO usar `unstable_after`** — no disponible en Next.js 14.2.x
 
 ### Restricción de exports en route files de Next.js
 - Los archivos `app/api/*/route.ts` solo pueden exportar handlers HTTP (`GET`, `POST`, etc.) y config (`dynamic`, `runtime`)
-- Toda lógica compartida debe vivir en `lib/` — por eso existe `lib/analisis.ts`
+- Toda lógica compartida debe vivir en `lib/` — por eso existen `lib/analisis.ts` y `lib/noticias.ts`
 - Exportar funciones arbitrarias desde un route file causa error de build
+- Re-exportar tipos sí está permitido (`export type { Foo } from "@/lib/x"`)
 
 ### Página de noticias diarias (`/noticias`)
 
@@ -183,13 +213,26 @@ La página lee la key `noticias:diarias` de Redis (escrita por el workflow n8n c
 
 **Contraste light mode:** nunca usar `text-zinc-400` para texto informativo sobre fondo blanco — mínimo `text-zinc-500` (contrast ratio ~4.6:1). `text-zinc-300` es invisible en light mode.
 
-### Workflow n8n (`news_summary_v2.json`)
+### Workflows n8n
 
-Flujo activo que corre diariamente a las 9am. **Nunca usar el `news_summary.json` original** — está deprecado.
+Hay 4 workflows activos:
+
+| Archivo | Qué hace | Frecuencia |
+|---|---|---|
+| `news_summary_n8n.json` | Genera `noticias:diarias` (RSS → Opus → og:image → Redis) | 09:00 + 18:00 ARG |
+| `tech_summary_n8n.json` | Genera `noticias:tech` (mismo pipeline con feeds tech) | 09:30 + 18:30 ARG |
+| `home_analisis_refresh_n8n.json` | HTTP GET a `/api/analisis/revalidate` | cada 4hs ARG |
+| `home_noticias_refresh_n8n.json` | HTTP GET a `/api/noticias/revalidate` | cada 4hs ARG |
+
+Los 2 workflows del home son muy simples (Schedule Trigger + HTTP Request con `Authorization: Bearer ${CRON_SECRET}`). Al importar reemplazar los placeholders `REEMPLAZAR-DOMINIO` y `REEMPLAZAR_CRON_SECRET`.
+
+### Workflow `news_summary_n8n.json` — pipeline detallado
+
+Flujo activo. **Nunca usar `news_summary.json` original** — está deprecado.
 
 **Pipeline:**
 ```
-Schedule (9am)
+Schedule (09:00 + 18:00 ARG)
 → 5 RSS feeds en paralelo (LN, Ámbito, BBC, Perfil, Clarín)
 → Limit 10 c/u → Merge (50 artículos)
 → Python: formatear artículos con texto + imagen RSS si existe

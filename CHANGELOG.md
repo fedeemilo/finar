@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.2.0] — 2026-06-03
+
+### Cambiado
+- **Home renderiza server-side desde Redis**: `Semaforo` y `NoticiasSection` ya no son client components con `useEffect + fetch`. Reciben datos por prop. Adiós skeletons + `LoadingMessage`. La página llega con contenido en el primer paint, igual que `/noticias`.
+- `app/page.tsx`: ahora es async server component. Llama `getCached` + fallback on-demand (genera con Claude y escribe Redis si está vacío). `Promise.all` paraleliza análisis + noticias.
+- `LastUpdated` del header ahora muestra el `timestamp` real del análisis (timezone ARG fijo) — no la hora del render.
+- Lógica de generación de noticias migrada a `lib/noticias.ts` (espejo de `lib/analisis.ts`). El endpoint `/api/noticias` ahora es un thin handler que importa del lib.
+- Noticias del home ahora tienen `STALE_KEY` + `STALE_TTL` (6h) igual que análisis — mismo patrón stale-while-revalidate.
+
+### Agregado
+- `app/api/noticias/revalidate/route.ts`: endpoint con auth `CRON_SECRET` para que n8n regenere el cache (espejo de `/api/analisis/revalidate`).
+- `n8n/home_analisis_refresh_n8n.json` y `n8n/home_noticias_refresh_n8n.json`: dos workflows que pegan a los endpoints `/revalidate` cada 4hs (3, 7, 11, 15, 19, 23 ARG). Antes de importar reemplazar `REEMPLAZAR-DOMINIO` y `REEMPLAZAR_CRON_SECRET`.
+- Workflows `news_summary_n8n.json` y `tech_summary_n8n.json` ahora corren 2x/día (09:00 + 18:00 ARG y 09:30 + 18:30 ARG respectivamente) para más dinamismo en `/noticias` y `/noticias/tech`.
+
+### Notas de deploy
+- Verificar que `CRON_SECRET` esté en Vercel env vars.
+- Importar los 2 workflows nuevos en n8n y reemplazar los placeholders antes de activarlos.
+- Re-importar (overwrite) `news_summary_n8n.json` y `tech_summary_n8n.json` para que tomen el segundo horario.
+
+---
+
 ## [0.1.10] — 2026-04-28
 
 ### Agregado

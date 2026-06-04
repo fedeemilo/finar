@@ -1,0 +1,830 @@
+{
+  "name": "Personal - Tech News Summary v2 (FinAR)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9,
+              "triggerAtMinute": 30
+            },
+            {
+              "triggerAtHour": 18,
+              "triggerAtMinute": 30
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "fea10eb1-7380-4873-8e45-825488de7c8c",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://hnrss.org/newest?points=50",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -368,
+        240
+      ],
+      "id": "9e4abc8d-122d-410b-ad67-8087a699a7fb",
+      "name": "Read Hacker News"
+    },
+    {
+      "parameters": {
+        "url": "https://dev.to/feed/tag/webdev",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -368,
+        400
+      ],
+      "id": "1ff1531a-98c4-45b6-ae98-1e1a3c3f1f1f",
+      "name": "Read dev.to"
+    },
+    {
+      "parameters": {
+        "url": "https://github.blog/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -368,
+        576
+      ],
+      "id": "f7c560f4-08af-43f9-bc5f-a818ba3c2fd9",
+      "name": "Read GitHub Blog"
+    },
+    {
+      "parameters": {
+        "url": "https://nextjs.org/feed.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -368,
+        736
+      ],
+      "id": "2ed10b1c-9f5f-4f5c-a734-cdd482d2fe81",
+      "name": "Read Next.js"
+    },
+    {
+      "parameters": {
+        "url": "https://feeds.feedburner.com/TechCrunch/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -368,
+        896
+      ],
+      "id": "0c93b0c3-222f-45b0-86f6-aa6c3ee30897",
+      "name": "Read TechCrunch"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        240
+      ],
+      "id": "ec0d6e2c-9f44-42c7-8ef4-88b12076738b",
+      "name": "Limitar HN"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        400
+      ],
+      "id": "9dd71a16-75ca-4926-91c3-7fbf58a9f018",
+      "name": "Limitar dev.to"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        576
+      ],
+      "id": "b77e0e8b-fe7e-4f08-9b30-c8303271e8c1",
+      "name": "Limitar GitHub"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        736
+      ],
+      "id": "f00ad669-70ea-44da-bdb0-3a1213295fca",
+      "name": "Limitar Next.js"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        896
+      ],
+      "id": "1a712500-c7de-44fd-aa05-e7074f956b33",
+      "name": "Limitar TechCrunch"
+    },
+    {
+      "parameters": {
+        "numberInputs": 9
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        144,
+        288
+      ],
+      "id": "b5bdc206-e1e8-4af1-989c-918c7f2f84e2",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "articles_text = \"\"\n\nfor i, item in enumerate(_input.all(), 1):\n    title = item.json.get('title', 'Sin título')\n    summary = item.json.get('summary', '')\n    content = item.json.get('content', '')\n    link = item.json.get('link', '')\n\n    # Intentar extraer URL de imagen de múltiples campos RSS posibles\n    image_url = ''\n    enclosure = item.json.get('enclosure', {})\n    if isinstance(enclosure, dict):\n        enc_type = enclosure.get('type', '')\n        if 'image' in str(enc_type):\n            image_url = enclosure.get('url', '')\n    if not image_url:\n        image_url = (\n            item.json.get('thumbnail', '')\n            or item.json.get('image', '')\n            or item.json.get('media:content', '')\n            or ''\n        )\n        if isinstance(image_url, dict):\n            image_url = image_url.get('url', '') or image_url.get('@url', '')\n\n    text_preview = (summary or content)[:250] if (summary or content) else 'Sin contenido'\n\n    articles_text += f\"\\n\\n--- ARTÍCULO {i} ---\\n\"\n    articles_text += f\"Título: {title}\\n\"\n    articles_text += f\"Resumen: {text_preview}...\\n\"\n    articles_text += f\"Link: {link}\\n\"\n    if image_url:\n        articles_text += f\"Imagen RSS: {image_url}\\n\"\n\nreturn [{\"articles\": articles_text}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        160
+      ],
+      "id": "a69c5d0a-7472-4f25-a7c8-8b21879b3c4c",
+      "name": "Formatear artículos"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-opus-4-8",
+          "mode": "list",
+          "cachedResultName": "claude-opus-4-8"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Sos un analista tech senior con amplio expertise en desarrollo de software, IA/ML, infraestructura, seguridad, devops y el ecosistema tech general. Tu audiencia son devs que ya están en el campo: no expliques qué es React, sí explicá qué cambia en React 19. No expliques qué es una CVE, sí explicá su severidad y blast radius.\n\n## Tarea\nAnalizá los artículos provistos y devolvé un resumen técnico priorizando SEÑAL sobre ruido. Cubrí el panorama tech completo, no te limites a un stack específico.\n\nÁreas relevantes (no exhaustivo):\n- Lenguajes y frameworks (JS/TS/React/Next.js son foco personal, pero también Python, Go, Rust, etc.)\n- IA/ML: nuevos modelos, papers relevantes, herramientas, agentes, infraestructura ML\n- Seguridad: CVEs críticas, breaches, vulnerabilidades en libs populares, ataques notables (supply chain, 0-days)\n- Infraestructura y cloud: AWS/GCP/Azure, Kubernetes, bases de datos, observabilidad\n- DevOps y tooling: CI/CD, build tools, package managers, runtimes (Bun, Deno, Node)\n- Industria tech: layoffs masivos, acquisitions, IPOs, regulación que afecte a devs (EU AI Act, GDPR, etc.)\n- Open source: releases mayores, deprecations, drama relevante (xz-style), licencias\n- Hardware y sistemas: chips nuevos (NVIDIA, Apple Silicon, ARM), avances que muevan la aguja\n\nDescartá: clickbait, listicles genéricos (\"10 VS Code extensions\"), contenido patrocinado disfrazado, opiniones sin sustancia técnica, duplicados temáticos entre fuentes (quedate con la mejor cobertura).\n\n## Artículos a analizar\n<articles>\n{{ $json.articles }}\n</articles>\n\n## Criterio de selección para top3\nOrdená por IMPACTO REAL en el ecosistema tech, no por viralidad. Una CVE crítica en una lib que usás todos los días > un hot-take con 500 upvotes. Un release relevante de un modelo IA > un anuncio corporativo vacío.\n\nDiversidad temática: si los 3 candidatos top son del mismo tema (ej: todo IA), está OK siempre que la calidad lo justifique — aclaralo en \"tendencias\". Si hay paridad de impacto entre temas, priorizá cubrir áreas distintas. Bonus si entra seguridad cuando hay algo realmente crítico (no metas CVEs menores por cuota).\n\nSesgo personal del lector: aplicá un leve boost (no override) a temas de JS/TS/React/Next.js/Node/AWS/Kubernetes — el lector trabaja con ese stack. Pero NO descartes algo importante por estar fuera de ese stack.\n\n## Formato de salida\nRespondé SOLO con JSON válido, sin markdown ni texto adicional:\n\n{\n  \"resumen\": \"Resumen denso de los temas dominantes del día en tech (amplio, no solo el stack del lector). Sé específico: tecnologías, versiones, empresas, CVEs. Si no hay novedades de IA hoy, no las inventes. ~80 palabras.\",\n  \"top3\": [\n    {\n      \"titulo\": \"Título técnico descriptivo (no clickbait)\",\n      \"descripcion\": \"Cubrí: qué es exactamente, qué problema resuelve o qué rompe, quién lo publicó/descubrió, impacto concreto para un dev (no necesariamente JS — ajustá al tema), y acción recomendada (parchear YA, probar, migrar, esperar, ignorar). Incluí versiones, CVEs, benchmarks, severidad si están. ~100 palabras.\",\n      \"url\": \"URL exacta\",\n      \"categoria\": \"framework | ai | security | infra | devops | industry | opensource | hardware\",\n      \"imagen\": \"\"\n    }\n    // ... otros 2 con misma estructura\n  ],\n  \"tendencias\": [\n    \"Patrón técnico que se repite entre fuentes hoy (puede ser de cualquier área). ~50 palabras.\",\n    \"Tendencia diferente cubriendo otra área (si la primera fue IA, ésta puede ser seguridad/infra/industria). ~50 palabras.\",\n    \"Algo a contracorriente, advertencia o crítica de una sola fuente. Si no hay nada así hoy: 'Sin contrapuntos relevantes en las fuentes de hoy.' No inventes.\"\n  ],\n  \"alertas_seguridad\": \"Si hay CVEs críticas, breaches o vulnerabilidades urgentes mencionadas, listalas acá con severidad y acción inmediata. Si no hay nada urgente: null.\",\n  \"conclusion\": \"1-2 oraciones accionables: qué priorizar esta semana. Concreto. 'Estate atento' está prohibido.\"\n}\n\n## Reglas duras\n- Exactamente 3 items en top3, exactamente 3 strings en tendencias\n- JSON puro, sin ```json ni texto antes/después\n- \"imagen\" siempre string vacío, \"categoria\" siempre uno de los valores enumerados\n- \"alertas_seguridad\" puede ser null si no hay nada crítico — no infles por cumplir\n- Si una fuente no aporta nada decente hoy, no la forces en el top3\n- Especificidad técnica > generalidad. \"CVE-2024-XXXX en lodash <4.17.21 permite RCE vía prototype pollution\" > \"vulnerabilidad en lodash\"\n- Prohibido inventar URLs, versiones, CVEs o benchmarks. Si no está en el input, no existe.\n- Prohibido \"estate atento\", \"es importante seguir\", \"vale la pena investigar\" sin decir qué hacer concretamente"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 4096
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        656,
+        256
+      ],
+      "id": "edcba139-198a-4d54-936e-7446e43fbc26",
+      "name": "Analizar con Claude",
+      "credentials": {
+        "anthropicApi": {
+          "id": "v7qHT7FnyWDK5oIg",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parsear respuesta de Claude\nconst text = $input.first().json.content[0].text;\nconst jsonMatch = text.match(/\\{[\\s\\S]*\\}/);\nif (!jsonMatch) throw new Error('Claude no devolvió JSON válido. Raw: ' + text.slice(0, 200));\n\nconst data = JSON.parse(jsonMatch[0]);\ndata.fecha = new Date().toISOString().slice(0, 10);\n\nif (!data.top3 || data.top3.length !== 3) throw new Error('top3 inválido: ' + JSON.stringify(data.top3));\nif (!data.tendencias || data.tendencias.length !== 3) throw new Error('tendencias inválido');\n\nreturn [{ json: { data } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        256
+      ],
+      "id": "f2e0b5ef-bce3-4240-9025-a05523fcddcf",
+      "name": "Parsear JSON Claude"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Separar las 3 URLs del top3 en items individuales para scrapear en paralelo\nconst data = $input.first().json.data;\nconst dataStr = JSON.stringify(data);\n\nreturn data.top3.map((noticia, index) => ({\n  json: {\n    scrapeIndex: index,\n    scrapeUrl: noticia.url,\n    dataStr,\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        256
+      ],
+      "id": "b34e2ee7-755f-4c61-bc8a-d62d59f8a6d0",
+      "name": "Preparar scraping"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.scrapeUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (compatible; FinAR/1.0; +https://finar.app)"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1392,
+        256
+      ],
+      "id": "00fa89c8-5419-4041-8606-98060ad9d3ba",
+      "name": "Scrape artículo",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const originalItems = $('Preparar scraping').all();\nconst scrapedItems = $input.all();\n\nreturn scrapedItems.map((item, i) => {\n  const original = originalItems[i].json;\n  let ogImage = '';\n\n  try {\n    const html = (item.json.data || item.json.body || '') + '';\n\n    const match =\n      html.match(/<meta[^>]*property=[\"']og:image[\"'][^>]*content=[\"']([^\"']+)[\"']/i) ||\n      html.match(/<meta[^>]*content=[\"']([^\"']+)[\"'][^>]*property=[\"']og:image[\"']/i) ||\n      html.match(/<meta[^>]*name=[\"']twitter:image[\"'][^>]*content=[\"']([^\"']+)[\"']/i) ||\n      html.match(/<meta[^>]*content=[\"']([^\"']+)[\"'][^>]*name=[\"']twitter:image[\"']/i);\n\n    if (match && match[1]) {\n      ogImage = match[1].trim()\n        .replace(/&amp;/g, '&')\n        .replace(/&lt;/g, '<')\n        .replace(/&gt;/g, '>')\n        .replace(/&quot;/g, '\"')\n        .replace(/&#39;/g, \"'\");\n    }\n  } catch (e) {\n    // scraping falló para este item — imagen queda vacía\n  }\n\n  return {\n    json: {\n      scrapeIndex: original.scrapeIndex,\n      ogImage,\n      dataStr: original.dataStr,\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1616,
+        256
+      ],
+      "id": "ff9e6987-062e-4db4-9a68-d83f33ff052d",
+      "name": "Extraer og:image"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "imageResults",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        256
+      ],
+      "id": "17608c76-06a7-49de-be67-e6446f7f3c53",
+      "name": "Agregar resultados"
+    },
+    {
+      "parameters": {
+        "jsCode": "const imageResults = $input.first().json.imageResults;\nconst data = JSON.parse(imageResults[0].dataStr);\n\nimageResults.forEach(result => {\n  if (result.ogImage) {\n    data.top3[result.scrapeIndex].imagen = result.ogImage;\n  }\n});\n\nconst payload = JSON.stringify(data);\nconst upstashBody = JSON.stringify(['SET', 'noticias:tech', payload, 'EX', '90000']);\n\nreturn [{ json: { upstashBody, fecha: data.fecha } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2064,
+        256
+      ],
+      "id": "cefe4f2a-6f21-43bf-bad5-8b01a1ff9695",
+      "name": "Reconstruir con imágenes"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://relaxing-clam-77577.upstash.io",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.upstashBody }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2288,
+        256
+      ],
+      "id": "aab111d1-0c6e-451f-8a99-ef0225d1bcbb",
+      "name": "Guardar en Upstash Redis",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "3or0kamU0PPsVQPU",
+          "name": "Upstash Redis REST"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://hackernoon.com/feed",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -368,
+        1056
+      ],
+      "id": "71c20573-7838-4cb0-a5e1-3fcc38dce856",
+      "name": "Read Hackernoon"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        1056
+      ],
+      "id": "1a73778f-20b6-48a2-a039-cc07570fdfce",
+      "name": "Limitar Hackernoon"
+    },
+    {
+      "parameters": {
+        "url": "https://vercel.com/atom",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -368,
+        1216
+      ],
+      "id": "62e88143-49e5-4406-9f5b-4cde4ecd1c37",
+      "name": "Read Vercel"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        1216
+      ],
+      "id": "22a9b036-06ea-427a-8b35-003663546c5e",
+      "name": "Limitar Vercel"
+    },
+    {
+      "parameters": {
+        "url": "https://feeds.arstechnica.com/arstechnica/index",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -368,
+        1376
+      ],
+      "id": "d8a046d1-2b13-4040-bba2-4068c5e9ede5",
+      "name": "Read Ars Technica"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        1376
+      ],
+      "id": "916d9778-5790-475a-a278-a2f1f09a241a",
+      "name": "Limitar Ars Technica"
+    },
+    {
+      "parameters": {
+        "url": "https://feeds.feedburner.com/TheHackersNews",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -368,
+        1552
+      ],
+      "id": "ed42a947-abc0-48e6-99bc-0880db42bb1c",
+      "name": "Read Ars TheHackersNews"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        1552
+      ],
+      "id": "1bb23d5a-f17e-46a3-8d02-c32db7d250c8",
+      "name": "Limitar Ars TheHackersNews"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Hacker News",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read dev.to",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read GitHub Blog",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Next.js",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read TechCrunch",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Hackernoon",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Vercel",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Ars Technica",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Ars TheHackersNews",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Hacker News": {
+      "main": [
+        [
+          {
+            "node": "Limitar HN",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read dev.to": {
+      "main": [
+        [
+          {
+            "node": "Limitar dev.to",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read GitHub Blog": {
+      "main": [
+        [
+          {
+            "node": "Limitar GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Next.js": {
+      "main": [
+        [
+          {
+            "node": "Limitar Next.js",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read TechCrunch": {
+      "main": [
+        [
+          {
+            "node": "Limitar TechCrunch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limitar HN": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limitar dev.to": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Limitar GitHub": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Limitar Next.js": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Limitar TechCrunch": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Formatear artículos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear artículos": {
+      "main": [
+        [
+          {
+            "node": "Analizar con Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analizar con Claude": {
+      "main": [
+        [
+          {
+            "node": "Parsear JSON Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear JSON Claude": {
+      "main": [
+        [
+          {
+            "node": "Preparar scraping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar scraping": {
+      "main": [
+        [
+          {
+            "node": "Scrape artículo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape artículo": {
+      "main": [
+        [
+          {
+            "node": "Extraer og:image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer og:image": {
+      "main": [
+        [
+          {
+            "node": "Agregar resultados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agregar resultados": {
+      "main": [
+        [
+          {
+            "node": "Reconstruir con imágenes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reconstruir con imágenes": {
+      "main": [
+        [
+          {
+            "node": "Guardar en Upstash Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Hackernoon": {
+      "main": [
+        [
+          {
+            "node": "Limitar Hackernoon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limitar Hackernoon": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 5
+          }
+        ]
+      ]
+    },
+    "Read Vercel": {
+      "main": [
+        [
+          {
+            "node": "Limitar Vercel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limitar Vercel": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 6
+          }
+        ]
+      ]
+    },
+    "Read Ars Technica": {
+      "main": [
+        [
+          {
+            "node": "Limitar Ars Technica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limitar Ars Technica": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 7
+          }
+        ]
+      ]
+    },
+    "Read Ars TheHackersNews": {
+      "main": [
+        [
+          {
+            "node": "Limitar Ars TheHackersNews",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limitar Ars TheHackersNews": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 8
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timeSavedMode": "fixed",
+    "timezone": "America/Argentina/Buenos_Aires",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "a3eb189b-cf72-4ba4-ac2a-52715ade43ee",
+  "meta": {
+    "instanceId": "e6da004272f5a12223e502aa9a32f45daec42d7eac797c6526feba8215fa31ac"
+  },
+  "id": "pw1OwfuHqSTsSXqB",
+  "tags": []
+}

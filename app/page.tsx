@@ -5,18 +5,86 @@ import { Recomendador } from "@/components/Recomendador";
 import { GlosarioTooltip } from "@/components/GlosarioTooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Newspaper } from "lucide-react";
+import { getCached, setCache } from "@/lib/redis";
+import {
+  generarAnalisis,
+  CACHE_KEY as ANALISIS_CACHE,
+  STALE_KEY as ANALISIS_STALE,
+  TTL as ANALISIS_TTL,
+  STALE_TTL as ANALISIS_STALE_TTL,
+  type AnalisisResponse,
+} from "@/lib/analisis";
+import {
+  generarNoticias,
+  CACHE_KEY as NOTICIAS_CACHE,
+  STALE_KEY as NOTICIAS_STALE,
+  TTL as NOTICIAS_TTL,
+  STALE_TTL as NOTICIAS_STALE_TTL,
+  type Noticia,
+} from "@/lib/noticias";
 
-function LastUpdated() {
-  const now = new Date();
+export const dynamic = "force-dynamic";
+
+async function loadAnalisis(): Promise<AnalisisResponse | null> {
+  const fresh = await getCached<AnalisisResponse>(ANALISIS_CACHE);
+  if (fresh) return fresh;
+
+  const stale = await getCached<AnalisisResponse>(ANALISIS_STALE);
+  if (stale) return { ...stale, stale: true };
+
+  try {
+    const analisis = await generarAnalisis();
+    await Promise.all([
+      setCache(ANALISIS_CACHE, analisis, ANALISIS_TTL),
+      setCache(ANALISIS_STALE, analisis, ANALISIS_STALE_TTL),
+    ]);
+    return analisis;
+  } catch (err) {
+    console.error("Home: fallback on-demand de análisis falló", err);
+    return null;
+  }
+}
+
+async function loadNoticias(): Promise<Noticia[] | null> {
+  const fresh = await getCached<Noticia[]>(NOTICIAS_CACHE);
+  if (fresh) return fresh;
+
+  const stale = await getCached<Noticia[]>(NOTICIAS_STALE);
+  if (stale) return stale;
+
+  try {
+    const noticias = await generarNoticias();
+    await Promise.all([
+      setCache(NOTICIAS_CACHE, noticias, NOTICIAS_TTL),
+      setCache(NOTICIAS_STALE, noticias, NOTICIAS_STALE_TTL),
+    ]);
+    return noticias;
+  } catch (err) {
+    console.error("Home: fallback on-demand de noticias falló", err);
+    return null;
+  }
+}
+
+function formatHoraArg(iso?: string): string {
+  const date = iso ? new Date(iso) : new Date();
+  return date.toLocaleTimeString("es-AR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "America/Argentina/Buenos_Aires",
+  });
+}
+
+function LastUpdated({ timestamp }: { timestamp?: string }) {
   return (
     <span className="text-gray-500 dark:text-white/30 text-xs">
-      Actualizado:{" "}
-      {now.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
+      Actualizado: {formatHoraArg(timestamp)}
     </span>
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const [analisis, noticias] = await Promise.all([loadAnalisis(), loadNoticias()]);
+
   return (
     <div
       className="min-h-screen"
@@ -43,7 +111,7 @@ export default function Home() {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <LastUpdated />
+            <LastUpdated timestamp={analisis?.timestamp} />
             <Link
               href="/noticias"
               className="flex items-center gap-1.5 text-stone-500 dark:text-white/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors text-xs font-medium"
@@ -87,7 +155,7 @@ export default function Home() {
               <span className="w-2 h-2 rounded-full bg-red-400" />
             </div>
           </div>
-          <Semaforo />
+          <Semaforo analisis={analisis} />
         </section>
 
         {/* Divider */}
@@ -115,7 +183,7 @@ export default function Home() {
           <p className="text-gray-500 dark:text-white/40 text-sm mb-5">
             Lo más relevante, resumido en dos oraciones. Sin tecnicismos.
           </p>
-          <NoticiasSection />
+          <NoticiasSection noticias={noticias} />
         </section>
 
         {/* Glosario CTA */}

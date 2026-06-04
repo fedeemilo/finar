@@ -2,19 +2,34 @@
 
 import { useState } from "react";
 import { GlosarioTooltip } from "./GlosarioTooltip";
-import { ChevronDown, type LucideIcon } from "lucide-react";
+import {
+  ChevronDown,
+  ArrowRightLeft,
+  Banknote,
+  Landmark,
+  Globe,
+  Bitcoin,
+  Gem,
+  type LucideIcon,
+} from "lucide-react";
 
 export type SemaforoStatus = "green" | "yellow" | "red";
 
 export interface AssetCardData {
   id: string;
-  nombre: string;
-  icono: LucideIcon;
   status: SemaforoStatus;
   veredicto: string;
   porque: string;
-  glosarioTerm?: string;
 }
+
+const ASSET_META: Record<string, { nombre: string; icono: LucideIcon; glosarioTerm?: string }> = {
+  mep:          { nombre: "Dólar MEP",        icono: ArrowRightLeft, glosarioTerm: "MEP" },
+  blue:         { nombre: "Dólar Blue",       icono: Banknote,       glosarioTerm: "Blue" },
+  "plazo-fijo": { nombre: "Plazo Fijo",       icono: Landmark,       glosarioTerm: "Plazo_Fijo" },
+  cedears:      { nombre: "CEDEARs",          icono: Globe,          glosarioTerm: "CEDEAR" },
+  cripto:       { nombre: "Cripto (BTC/ETH)", icono: Bitcoin,        glosarioTerm: "BTC" },
+  oro:          { nombre: "Oro (GLD)",        icono: Gem,            glosarioTerm: "GLD" },
+};
 
 const STATUS_CONFIG = {
   green: {
@@ -46,6 +61,8 @@ const STATUS_CONFIG = {
 export function AssetCard({ data }: { data: AssetCardData }) {
   const [expanded, setExpanded] = useState(false);
   const config = STATUS_CONFIG[data.status];
+  const meta = ASSET_META[data.id] ?? { nombre: data.id, icono: Banknote };
+  const Icono = meta.icono;
 
   return (
     <button
@@ -55,7 +72,7 @@ export function AssetCard({ data }: { data: AssetCardData }) {
       <div className="flex items-start gap-4">
         {/* Icon */}
         <div className="flex-shrink-0 mt-0.5 p-2 rounded-xl bg-black/[0.07] dark:bg-white/5">
-          <data.icono size={22} className="text-gray-600 dark:text-white/50" strokeWidth={1.75} />
+          <Icono size={22} className="text-gray-600 dark:text-white/50" strokeWidth={1.75} />
         </div>
 
         {/* Content */}
@@ -77,12 +94,12 @@ export function AssetCard({ data }: { data: AssetCardData }) {
 
           {/* Name */}
           <div className="text-gray-800 dark:text-white/90 font-semibold text-base mb-1">
-            {data.glosarioTerm ? (
-              <GlosarioTooltip term={data.glosarioTerm}>
-                {data.nombre}
+            {meta.glosarioTerm ? (
+              <GlosarioTooltip term={meta.glosarioTerm}>
+                {meta.nombre}
               </GlosarioTooltip>
             ) : (
-              data.nombre
+              meta.nombre
             )}
           </div>
 

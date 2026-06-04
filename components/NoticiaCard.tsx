@@ -1,6 +1,6 @@
 "use client";
 
-import type { Noticia } from "@/app/api/noticias/route";
+import type { Noticia } from "@/lib/noticias";
 import { ExternalLink } from "lucide-react";
 
 const CATEGORIA_CONFIG: Record<Noticia["categoria"], { dot: string; label: string }> = {

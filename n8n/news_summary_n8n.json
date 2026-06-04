@@ -1,0 +1,837 @@
+{
+  "name": "Personal - News Summary v2 (FinAR)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            },
+            {
+              "triggerAtHour": 18
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1312,
+        -1280
+      ],
+      "id": "4dc1f40a-03a6-4ee4-8080-565954593a15",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://www.lanacion.com.ar/arc/outboundfeeds/rss/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -1680,
+        -1040
+      ],
+      "id": "884313f4-aca1-45b5-964e-66a2184cf46b",
+      "name": "Read LN",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://www.ambito.com/rss/home.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -1680,
+        -880
+      ],
+      "id": "45a2457e-9ace-4f76-8777-75672c14569d",
+      "name": "Read Ambito",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://feeds.bbci.co.uk/mundo/rss.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -1680,
+        -704
+      ],
+      "id": "19207da8-2072-4a70-9dbf-7321a01c7a26",
+      "name": "Read BBC Mundo",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://www.perfil.com/feed",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -1680,
+        -544
+      ],
+      "id": "45bacb7f-f43d-450f-bf8a-d6ddf019c332",
+      "name": "Perfil",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://www.clarin.com/rss/lo-ultimo/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -1680,
+        -384
+      ],
+      "id": "e8489f29-683b-48b6-b501-5689b94c8616",
+      "name": "Clarin",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1472,
+        -1040
+      ],
+      "id": "17617895-509f-4674-86af-2a957183e8d0",
+      "name": "Limitar LN"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1472,
+        -880
+      ],
+      "id": "335274ce-2ba4-49d2-a3f7-e4277f51f48a",
+      "name": "Limitar Ambito"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1472,
+        -704
+      ],
+      "id": "3a292280-a5a7-43a5-91f8-22e4149e160e",
+      "name": "Limitar BBC Mundo"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1472,
+        -544
+      ],
+      "id": "e679b169-3048-4c3a-ae76-d5b9194c5ae8",
+      "name": "Limitar Perfil"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1472,
+        -384
+      ],
+      "id": "8f0ee859-d203-4dce-b494-6732324de01f",
+      "name": "Limitar Clarin"
+    },
+    {
+      "parameters": {
+        "numberInputs": 9
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1168,
+        -992
+      ],
+      "id": "ce6c10e5-2ffc-46ce-830b-601b63df2aad",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "articles_text = \"\"\n\nfor i, item in enumerate(_input.all(), 1):\n    title = item.json.get('title', 'Sin título')\n    summary = item.json.get('summary', '')\n    content = item.json.get('content', '')\n    link = item.json.get('link', '')\n\n    image_url = ''\n    enclosure = item.json.get('enclosure', {})\n    if isinstance(enclosure, dict):\n        enc_type = enclosure.get('type', '')\n        if 'image' in str(enc_type):\n            image_url = enclosure.get('url', '')\n    if not image_url:\n        image_url = (\n            item.json.get('thumbnail', '')\n            or item.json.get('image', '')\n            or item.json.get('media:content', '')\n            or ''\n        )\n        if isinstance(image_url, dict):\n            image_url = image_url.get('url', '') or image_url.get('@url', '')\n\n    text_preview = (summary or content)[:200] if (summary or content) else 'Sin contenido'\n\n    articles_text += f\"\\n\\n--- ARTÍCULO {i} ---\\n\"\n    articles_text += f\"Título: {title}\\n\"\n    articles_text += f\"Resumen: {text_preview}...\\n\"\n    articles_text += f\"Link: {link}\\n\"\n    if image_url:\n        articles_text += f\"Imagen RSS: {image_url}\\n\"\n\nreturn [{\"articles\": articles_text}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -896,
+        -1120
+      ],
+      "id": "a93bafc0-7435-47c0-86b4-02400ea90423",
+      "name": "Formatear artículos"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-opus-4-8",
+          "mode": "list",
+          "cachedResultName": "claude-opus-4-8"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Sos un analista de noticias senior con expertise en Argentina, Latinoamérica y geopolítica global. Tu trabajo es destilar señal del ruido mediático: identificar qué pasó, qué importa, y dónde los medios divergen.\n\nTu audiencia es un lector argentino informado que quiere entender el panorama sin tragarse la línea editorial de un solo medio. No es necesario explicar quién es Milei o qué es el Banco Central — sí es necesario contextualizar cifras, decisiones y actores menos conocidos.\n\n## Tarea\nAnalizá los artículos provistos y devolvé un resumen periodístico con cobertura amplia y atribución honesta. Tus fuentes tienen líneas editoriales diversas (La Nación, Clarín, Ámbito, BBC Mundo, Perfil, El Destape, Infobae, etc.) — aprovechalo: cuando cubren lo mismo distinto, ese contraste es información valiosa, no un problema a resolver.\n\nÁreas relevantes (no exhaustivo):\n- Política nacional: gobierno, oposición, congreso, justicia, provincias\n- Economía: inflación, dólar, tasas, BCRA, mercados, FMI, actividad, empleo\n- Sociedad: educación, salud, seguridad, conflictos sociales, derechos humanos\n- Internacional con impacto en Argentina: EE.UU., Brasil, China, UE, conflictos globales, commodities\n- Geopolítica y conflictos: guerras, elecciones relevantes, crisis migratorias, sanciones\n- Ciencia, cultura, deportes: si hay algo de magnitud real (no farandulización)\n- Clima y catástrofes: eventos extremos, alertas relevantes\n- Tecnología en lo que afecta política pública: regulación de IA, ciberataques a infra crítica, etc.\n\nDescartá: clickbait, farándula sin relevancia política/social, listicles, contenido patrocinado, opiniones editoriales sin hecho de base, noticias menores infladas por un solo medio.\n\n## Artículos a analizar\n<articles>\n{{ $json.articles }}\n</articles>\n\n## Criterio de selección para top3\nOrdená por RELEVANCIA REAL, no por cantidad de cobertura. Un decreto que cambia regulación importa más que una declaración rimbombante de un funcionario menor, aunque la segunda tenga más clicks.\n\nDiversidad temática: si los 3 top son del mismo tema (ej: todo economía), está OK si el día lo justifica — el contexto manda. Si hay paridad de relevancia entre áreas, cubrí ángulos distintos (ej: 1 política, 1 economía, 1 internacional).\n\nInternacional: incluí al menos uno si hay algo de magnitud genuina. No metas una nota internacional menor solo para \"cubrir cuota\". Si el día es netamente local, está bien que el top3 sea todo local — mencionalo en conclusión.\n\n## Atribución y manejo de sesgo editorial\nEsto es crítico. Tus fuentes tienen perspectivas distintas:\n- Línea oficialista/centro-derecha/liberal: La Nación, Clarín, Ámbito, Infobae (con matices)\n- Línea opositora/centro-izquierda: El Destape, Página 12 si está, Tiempo Argentino\n- Centro/mixto: Perfil\n- Internacional con menor sesgo local: BBC Mundo\n\nReglas:\n- Cuando un hecho es indiscutible (un decreto se firmó, un funcionario renunció), reportalo sin atribuir.\n- Cuando hay interpretaciones divergentes del mismo hecho, atribuilo explícitamente: \"La Nación enmarca la medida como X mientras El Destape la describe como Y.\"\n- Cuando solo un medio cubre algo y los demás lo ignoran, notalo: \"Cobertura presente solo en [medio]\" — esto suele ser información sobre el medio tanto como sobre el hecho.\n- Nunca presentes una interpretación editorial como hecho. Si LN dice \"el gobierno fortaleció su posición\" eso es lectura, no hecho — atribuilo o reformulalo a hecho verificable.\n- No tomes partido vos. Tu trabajo es mapear el espectro, no votar en él.\n\n## Formato de salida\nRespondé SOLO con JSON válido, sin markdown ni texto adicional:\n\n{\n  \"resumen\": \"Resumen denso del día: temas dominantes en política, economía e internacional. Si hay cobertura contradictoria importante entre medios, mencionalo acá. Específico: cifras, nombres, decisiones concretas. ~90 palabras.\",\n  \"top3\": [\n    {\n      \"titulo\": \"Título descriptivo del evento (no clickbait, no editorializado)\",\n      \"descripcion\": \"Cubrí: qué pasó (hechos verificables), actores involucrados, qué declararon textual cuando sea relevante, contexto necesario para entenderlo, qué se anticipa. Si hay coberturas divergentes, atribuí. Priorizá cifras, fechas, nombres concretos. ~110 palabras.\",\n      \"url\": \"URL exacta del artículo principal\",\n      \"categoria\": \"politica | economia | sociedad | internacional | geopolitica | ciencia | cultura | deportes | clima | tecnologia\",\n      \"cobertura\": \"unanime | divergente | exclusiva\",\n      \"imagen\": \"\"\n    }\n    // ... otros 2 con misma estructura\n  ],\n  \"tendencias\": [\n    \"Patrón que se repite entre fuentes hoy. Identificá actores, mecánica del patrón y qué podría significar hacia adelante. ~60 palabras.\",\n    \"Tendencia diferente cubriendo otra área. Si la primera fue política, ésta puede ser económica, internacional o social. ~60 palabras.\",\n    \"Algo a contracorriente: cobertura exclusiva de uno o dos medios, perspectiva que contrasta con la narrativa dominante, o ausencia notable (un tema que medios opositores/oficialistas ignoran). Si no hay nada así hoy: 'Sin contrapuntos editoriales relevantes en las fuentes de hoy.' No inventes.\"\n  ],\n  \"alertas\": \"Si hay eventos urgentes que requieran atención inmediata del lector (catástrofe, medida económica que afecte ahorros/precios, conflicto en escalada, alertas climáticas), listalas acá. Si no hay nada urgente: null.\",\n  \"conclusion\": \"1-2 oraciones sintetizando qué está en juego esta semana, qué seguir de cerca, balanceando local e internacional si corresponde. Específico, no genérico.\"\n}\n\n## Reglas duras\n- Exactamente 3 items en top3, exactamente 3 strings en tendencias\n- JSON puro, sin ```json ni texto antes/después\n- \"imagen\" siempre string vacío\n- \"categoria\" y \"cobertura\" siempre uno de los valores enumerados\n- \"alertas\" puede ser null si no hay nada urgente\n- Prohibido inventar declaraciones, cifras, nombres o URLs. Si no está en el input, no existe.\n- Prohibido editorializar. \"El gobierno avanzó con éxito\" → \"El gobierno aprobó X medida con Y votos a favor\".\n- Prohibido \"habrá que ver\", \"el tiempo dirá\", \"es importante seguir\" sin decir qué seguir concretamente.\n- Si un actor cita textualmente algo importante, conservá la cita entre comillas con atribución."
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 4096
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        -656,
+        -1024
+      ],
+      "id": "a4f32b2c-1c99-40a5-a89b-5cfc138c00a7",
+      "name": "Analizar con Claude",
+      "credentials": {
+        "anthropicApi": {
+          "id": "v7qHT7FnyWDK5oIg",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parsear respuesta de Claude\nconst text = $input.first().json.content[0].text;\nconst jsonMatch = text.match(/\\{[\\s\\S]*\\}/);\nif (!jsonMatch) throw new Error('Claude no devolvió JSON válido. Raw: ' + text.slice(0, 200));\n\nconst data = JSON.parse(jsonMatch[0]);\ndata.fecha = new Date().toISOString().slice(0, 10);\n\nif (!data.top3 || data.top3.length !== 3) throw new Error('top3 inválido: ' + JSON.stringify(data.top3));\nif (!data.tendencias || data.tendencias.length !== 3) throw new Error('tendencias inválido');\n\n// Serializar data para pasarla a los nodos siguientes\nreturn [{ json: { data } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -368,
+        -1024
+      ],
+      "id": "79e71780-575f-47c8-b0ba-40cffe7628a6",
+      "name": "Parsear JSON Claude"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Separar las 3 URLs del top3 en items individuales para scrapear en paralelo\nconst data = $input.first().json.data;\nconst dataStr = JSON.stringify(data);\n\nreturn data.top3.map((noticia, index) => ({\n  json: {\n    scrapeIndex: index,\n    scrapeUrl: noticia.url,\n    dataStr,\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -144,
+        -1024
+      ],
+      "id": "790923da-8094-44e4-9fa6-c88966d043c5",
+      "name": "Preparar scraping"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.scrapeUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (compatible; FinAR/1.0; +https://finar.app)"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        80,
+        -1024
+      ],
+      "id": "cb9c2833-5951-4377-8927-6151ac0da3b5",
+      "name": "Scrape artículo",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Acceder a los items originales (con scrapeIndex y dataStr) usando el nodo anterior al scraping\nconst originalItems = $('Preparar scraping').all();\nconst scrapedItems = $input.all();\n\nreturn scrapedItems.map((item, i) => {\n  const original = originalItems[i].json;\n  let ogImage = '';\n\n  try {\n    // item.json.data contiene el HTML cuando responseFormat es 'text'\n    const html = (item.json.data || item.json.body || '') + '';\n\n    // Intentar extraer og:image (y twitter:image como fallback)\n    const match =\n      html.match(/<meta[^>]*property=[\"']og:image[\"'][^>]*content=[\"']([^\"']+)[\"']/i) ||\n      html.match(/<meta[^>]*content=[\"']([^\"']+)[\"'][^>]*property=[\"']og:image[\"']/i) ||\n      html.match(/<meta[^>]*name=[\"']twitter:image[\"'][^>]*content=[\"']([^\"']+)[\"']/i) ||\n      html.match(/<meta[^>]*content=[\"']([^\"']+)[\"'][^>]*name=[\"']twitter:image[\"']/i);\n\n    if (match && match[1]) {\n      ogImage = match[1].trim()\n        .replace(/&amp;/g, '&')\n        .replace(/&lt;/g, '<')\n        .replace(/&gt;/g, '>')\n        .replace(/&quot;/g, '\"')\n        .replace(/&#39;/g, \"'\");\n    }\n  } catch (e) {\n    // Scraping falló para este item — imagen queda vacía, no es bloqueante\n  }\n\n  return {\n    json: {\n      scrapeIndex: original.scrapeIndex,\n      ogImage,\n      dataStr: original.dataStr,\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        -1024
+      ],
+      "id": "29237620-bf6c-4962-bce2-2be3164ff09c",
+      "name": "Extraer og:image"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "imageResults",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        528,
+        -1024
+      ],
+      "id": "a0957406-b90e-46fc-81b8-25ee40187f04",
+      "name": "Agregar resultados"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Reconstruir el objeto data inyectando las imágenes scrapeadas\nconst imageResults = $input.first().json.imageResults;\n\n// Todos los items tienen el mismo dataStr (los datos originales de Claude)\nconst data = JSON.parse(imageResults[0].dataStr);\n\n// Inyectar imágenes por índice\nimageResults.forEach(result => {\n  if (result.ogImage) {\n    data.top3[result.scrapeIndex].imagen = result.ogImage;\n  }\n});\n\n// Preparar body para Upstash\nconst payload = JSON.stringify(data);\nconst upstashBody = JSON.stringify(['SET', 'noticias:diarias', payload, 'EX', '90000']);\n\nreturn [{ json: { upstashBody, fecha: data.fecha } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        -1024
+      ],
+      "id": "82e74b61-0d15-41d0-97a4-dbc9945bb5c7",
+      "name": "Reconstruir con imágenes"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://relaxing-clam-77577.upstash.io",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.upstashBody }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        976,
+        -1024
+      ],
+      "id": "1293fb8a-9d40-44ec-8de1-2c49eb1c8888",
+      "name": "Guardar en Upstash Redis",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "3or0kamU0PPsVQPU",
+          "name": "Upstash Redis REST"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://tn.com.ar/arc/outboundfeeds/google-news-feed/?outputType=xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -1680,
+        -208
+      ],
+      "id": "41aa7181-0661-4484-99fc-bf5fe7300eb3",
+      "name": "TN",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1472,
+        -208
+      ],
+      "id": "3e3314dd-c26f-4bd0-89cb-3a88692de3c3",
+      "name": "Limitar TN"
+    },
+    {
+      "parameters": {
+        "url": "https://www.lapoliticaonline.com/files/rss/ultimasnoticias-mx.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -1680,
+        -48
+      ],
+      "id": "bbc9ebd2-9ea6-407f-8f94-043cadb6d49a",
+      "name": "LaPoliticaOnline",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1472,
+        -48
+      ],
+      "id": "2e679cd7-6b4f-4670-b9d7-3e7374689c7b",
+      "name": "Limitar LaPoliticaOnline"
+    },
+    {
+      "parameters": {
+        "url": "https://www.tiempoar.com.ar/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -1680,
+        112
+      ],
+      "id": "69165b16-7cdf-4bfe-8f75-f8f7e0715a99",
+      "name": "Tiempo Argentino",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1472,
+        112
+      ],
+      "id": "3dac6070-aafe-4c84-a272-2eb4c98e6bf3",
+      "name": "Limitar Tiempo Argentino"
+    },
+    {
+      "parameters": {
+        "url": "https://www.eldiarioar.com/rss/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -1680,
+        288
+      ],
+      "id": "69ecc5e6-bcca-4f77-89d3-1985981007f9",
+      "name": "elDiarioAR",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1472,
+        288
+      ],
+      "id": "fa74bd5d-ff88-4e77-b967-9c63e8d18532",
+      "name": "Limitar elDiarioAR"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read LN",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Ambito",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read BBC Mundo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Perfil",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Clarin",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "TN",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "LaPoliticaOnline",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Tiempo Argentino",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "elDiarioAR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read LN": {
+      "main": [
+        [
+          {
+            "node": "Limitar LN",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Ambito": {
+      "main": [
+        [
+          {
+            "node": "Limitar Ambito",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read BBC Mundo": {
+      "main": [
+        [
+          {
+            "node": "Limitar BBC Mundo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Perfil": {
+      "main": [
+        [
+          {
+            "node": "Limitar Perfil",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clarin": {
+      "main": [
+        [
+          {
+            "node": "Limitar Clarin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limitar LN": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limitar Ambito": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Limitar BBC Mundo": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Limitar Perfil": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Limitar Clarin": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Formatear artículos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear artículos": {
+      "main": [
+        [
+          {
+            "node": "Analizar con Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analizar con Claude": {
+      "main": [
+        [
+          {
+            "node": "Parsear JSON Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear JSON Claude": {
+      "main": [
+        [
+          {
+            "node": "Preparar scraping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar scraping": {
+      "main": [
+        [
+          {
+            "node": "Scrape artículo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape artículo": {
+      "main": [
+        [
+          {
+            "node": "Extraer og:image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer og:image": {
+      "main": [
+        [
+          {
+            "node": "Agregar resultados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agregar resultados": {
+      "main": [
+        [
+          {
+            "node": "Reconstruir con imágenes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reconstruir con imágenes": {
+      "main": [
+        [
+          {
+            "node": "Guardar en Upstash Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TN": {
+      "main": [
+        [
+          {
+            "node": "Limitar TN",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limitar TN": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 5
+          }
+        ]
+      ]
+    },
+    "LaPoliticaOnline": {
+      "main": [
+        [
+          {
+            "node": "Limitar LaPoliticaOnline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limitar LaPoliticaOnline": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 6
+          }
+        ]
+      ]
+    },
+    "Tiempo Argentino": {
+      "main": [
+        [
+          {
+            "node": "Limitar Tiempo Argentino",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limitar Tiempo Argentino": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 7
+          }
+        ]
+      ]
+    },
+    "elDiarioAR": {
+      "main": [
+        [
+          {
+            "node": "Limitar elDiarioAR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limitar elDiarioAR": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 8
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timeSavedMode": "fixed",
+    "timezone": "America/Argentina/Buenos_Aires",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "87fefc5e-4c0c-40ad-ae87-775b6299a430",
+  "meta": {
+    "instanceId": "e6da004272f5a12223e502aa9a32f45daec42d7eac797c6526feba8215fa31ac"
+  },
+  "id": "OfVZ5ygvjzLCg033",
+  "tags": []
+}
