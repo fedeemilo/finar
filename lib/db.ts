@@ -55,14 +55,18 @@ export async function loadSnapshotByDate<T = unknown>(
 }
 
 /**
- * Trae las últimas N fechas (en ARG) con al menos un snapshot de 'analisis'.
- * Usado para el footer chips del home y la página /archivo (index).
+ * Trae las últimas N fechas (en ARG) con al menos un snapshot del kind dado.
+ * Default: 'analisis' (para el footer chips del home y /archivo index).
+ * También usado para los chips inline de /noticias y /noticias/tech.
  */
-export async function loadAvailableDates(limit = 7): Promise<string[]> {
+export async function loadAvailableDates(
+  limit = 7,
+  kind: SnapshotKind = "analisis"
+): Promise<string[]> {
   const { rows } = await sql<{ fecha: string }>`
     SELECT DISTINCT TO_CHAR(captured_at AT TIME ZONE ${ARG_TZ}, 'YYYY-MM-DD') AS fecha
     FROM snapshots
-    WHERE kind = 'analisis'
+    WHERE kind = ${kind}
     ORDER BY fecha DESC
     LIMIT ${limit}
   `;
@@ -126,56 +130,89 @@ export async function loadLatestAnalisisId(): Promise<number | null> {
 export type CotizacionField = "oficial_venta" | "blue_venta" | "mep_venta" | "ccl_venta";
 
 /**
- * Historial de un campo de cotización: 1 punto por día (la más reciente del día),
+ * Historial de un campo de cotización: 1 punto por día (el más reciente del día en ARG),
  * orden cronológico ascendente. Usado por el sparkline.
+ *
+ * Implementación: window function `ROW_NUMBER` que rankea por día (ARG TZ),
+ * filtramos rn=1 (el más reciente del día). Más estable que DISTINCT ON o ARRAY_AGG
+ * cuando el timezone se pasa como parámetro.
  */
 export async function loadCotizacionesHistorial(
   field: CotizacionField,
   days = 30
 ): Promise<number[]> {
-  // Whitelist: nunca interpolar field directamente en SQL sin validar.
   const allowed: CotizacionField[] = ["oficial_venta", "blue_venta", "mep_venta", "ccl_venta"];
   if (!allowed.includes(field)) return [];
 
-  // No podemos parametrizar nombres de columna con sql template literal,
-  // así que ejecutamos las 4 variantes posibles explícitamente.
   const interval = `${days} days`;
   let rows: { v: number }[];
   switch (field) {
     case "blue_venta":
       ({ rows } = await sql<{ v: number }>`
-        SELECT DISTINCT ON (DATE(captured_at AT TIME ZONE ${ARG_TZ}))
-          blue_venta::float AS v
-        FROM cotizaciones
-        WHERE captured_at >= NOW() - ${interval}::interval
-        ORDER BY DATE(captured_at AT TIME ZONE ${ARG_TZ}) ASC, captured_at DESC
+        SELECT v FROM (
+          SELECT
+            blue_venta::float AS v,
+            ROW_NUMBER() OVER (
+              PARTITION BY DATE(captured_at AT TIME ZONE ${ARG_TZ})
+              ORDER BY captured_at DESC
+            ) AS rn,
+            DATE(captured_at AT TIME ZONE ${ARG_TZ}) AS dia
+          FROM cotizaciones
+          WHERE captured_at >= NOW() - ${interval}::interval
+        ) sub
+        WHERE rn = 1
+        ORDER BY dia ASC
       `);
       break;
     case "oficial_venta":
       ({ rows } = await sql<{ v: number }>`
-        SELECT DISTINCT ON (DATE(captured_at AT TIME ZONE ${ARG_TZ}))
-          oficial_venta::float AS v
-        FROM cotizaciones
-        WHERE captured_at >= NOW() - ${interval}::interval
-        ORDER BY DATE(captured_at AT TIME ZONE ${ARG_TZ}) ASC, captured_at DESC
+        SELECT v FROM (
+          SELECT
+            oficial_venta::float AS v,
+            ROW_NUMBER() OVER (
+              PARTITION BY DATE(captured_at AT TIME ZONE ${ARG_TZ})
+              ORDER BY captured_at DESC
+            ) AS rn,
+            DATE(captured_at AT TIME ZONE ${ARG_TZ}) AS dia
+          FROM cotizaciones
+          WHERE captured_at >= NOW() - ${interval}::interval
+        ) sub
+        WHERE rn = 1
+        ORDER BY dia ASC
       `);
       break;
     case "mep_venta":
       ({ rows } = await sql<{ v: number }>`
-        SELECT DISTINCT ON (DATE(captured_at AT TIME ZONE ${ARG_TZ}))
-          mep_venta::float AS v
-        FROM cotizaciones
-        WHERE captured_at >= NOW() - ${interval}::interval
-        ORDER BY DATE(captured_at AT TIME ZONE ${ARG_TZ}) ASC, captured_at DESC
+        SELECT v FROM (
+          SELECT
+            mep_venta::float AS v,
+            ROW_NUMBER() OVER (
+              PARTITION BY DATE(captured_at AT TIME ZONE ${ARG_TZ})
+              ORDER BY captured_at DESC
+            ) AS rn,
+            DATE(captured_at AT TIME ZONE ${ARG_TZ}) AS dia
+          FROM cotizaciones
+          WHERE captured_at >= NOW() - ${interval}::interval
+        ) sub
+        WHERE rn = 1
+        ORDER BY dia ASC
       `);
       break;
     case "ccl_venta":
       ({ rows } = await sql<{ v: number }>`
-        SELECT DISTINCT ON (DATE(captured_at AT TIME ZONE ${ARG_TZ}))
-          ccl_venta::float AS v
-        FROM cotizaciones
-        WHERE captured_at >= NOW() - ${interval}::interval
-        ORDER BY DATE(captured_at AT TIME ZONE ${ARG_TZ}) ASC, captured_at DESC
+        SELECT v FROM (
+          SELECT
+            ccl_venta::float AS v,
+            ROW_NUMBER() OVER (
+              PARTITION BY DATE(captured_at AT TIME ZONE ${ARG_TZ})
+              ORDER BY captured_at DESC
+            ) AS rn,
+            DATE(captured_at AT TIME ZONE ${ARG_TZ}) AS dia
+          FROM cotizaciones
+          WHERE captured_at >= NOW() - ${interval}::interval
+        ) sub
+        WHERE rn = 1
+        ORDER BY dia ASC
       `);
       break;
   }
