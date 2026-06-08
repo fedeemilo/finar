@@ -4,6 +4,7 @@ import { NoticiasSection } from "@/components/NoticiasSection";
 import { Recomendador } from "@/components/Recomendador";
 import { GlosarioTooltip } from "@/components/GlosarioTooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { FinarBrand } from "@/components/FinarBrand";
 import { ArchivoChips } from "@/components/ArchivoChips";
 import { ShareButton } from "@/components/ShareButton";
 import { Newspaper } from "lucide-react";
@@ -155,23 +156,7 @@ export default async function Home() {
       {/* Sticky header */}
       <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-black/[0.12] dark:border-white/5">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-black tracking-tight text-gray-800 dark:text-white">
-              Fin
-              <span
-                style={{
-                  background: "linear-gradient(135deg, #00c896, #00e6aa)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                AR
-              </span>
-            </span>
-            <span className="text-[10px] text-gray-500 dark:text-white/30 bg-black/[0.08] dark:bg-white/5 px-1.5 py-0.5 rounded-md font-medium">
-              BETA
-            </span>
-          </div>
+          <FinarBrand />
           <div className="flex items-center gap-3">
             <LastUpdated timestamp={analisis?.timestamp} />
             <Link
