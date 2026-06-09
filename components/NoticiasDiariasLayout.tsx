@@ -18,9 +18,43 @@ import { fechaLegibleArg } from "@/lib/dates";
 interface NoticiaItem {
   titulo: string;
   descripcion: string;
-  fuente: string;
+  fuente?: string;
+  categoria?: string;
   url: string;
   imagen: string;
+}
+
+const CATEGORIA_LABELS: Record<string, string> = {
+  framework: "Framework",
+  ai: "IA",
+  security: "Seguridad",
+  infra: "Infra",
+  devops: "DevOps",
+  industry: "Industria",
+  opensource: "Open Source",
+  hardware: "Hardware",
+  politica: "Política",
+  economia: "Economía",
+  sociedad: "Sociedad",
+  internacional: "Internacional",
+  geopolitica: "Geopolítica",
+  ciencia: "Ciencia",
+  cultura: "Cultura",
+  deportes: "Deportes",
+  clima: "Clima",
+  tecnologia: "Tecnología",
+};
+
+function noticiaFuente(noticia: NoticiaItem): string {
+  if (noticia.fuente) return noticia.fuente;
+  if (noticia.categoria) {
+    return CATEGORIA_LABELS[noticia.categoria] ?? noticia.categoria;
+  }
+  try {
+    return new URL(noticia.url).hostname.replace(/^www\./, "");
+  } catch {
+    return "Fuente";
+  }
 }
 
 export interface NoticiasData {
@@ -195,7 +229,7 @@ export function NoticiasDiariasLayout({
                 <NoticiaImagenFallback
                   imagen={hero.imagen}
                   titulo={hero.titulo}
-                  fuente={hero.fuente}
+                  fuente={noticiaFuente(hero)}
                 />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-black/10" />
@@ -203,7 +237,7 @@ export function NoticiasDiariasLayout({
                 <span
                   className={`inline-block ${meta.badgeBg} text-white text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 mb-4`}
                 >
-                  {hero.fuente}
+                  {noticiaFuente(hero)}
                 </span>
                 <h2
                   className={`text-white text-2xl sm:text-4xl font-black leading-tight mb-3 ${meta.heroTitleHover} transition-colors duration-200 max-w-4xl`}
@@ -237,14 +271,14 @@ export function NoticiasDiariasLayout({
                   <NoticiaImagenFallback
                     imagen={noticia.imagen}
                     titulo={noticia.titulo}
-                    fuente={noticia.fuente}
+                    fuente={noticiaFuente(noticia)}
                   />
                 </div>
               </div>
               <span
                 className={`text-[10px] font-bold tracking-widest uppercase ${meta.cardSourceText} mb-2`}
               >
-                {noticia.fuente}
+                {noticiaFuente(noticia)}
               </span>
               <h3
                 className={`text-zinc-900 dark:text-white font-bold text-xl leading-snug mb-3 ${meta.cardTitleHover} transition-colors duration-200`}

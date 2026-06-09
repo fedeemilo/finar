@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.1] — 2026-06-09
+
+### Corregido
+- **`/noticias/tech` crasheaba en prod**: el workflow n8n guarda `categoria` en `top3`, no `fuente`. `NoticiaImagenFallback` llamaba `.toLowerCase()` sobre `undefined` al mostrar el fallback de imagen. Fix: helper `noticiaFuente()` en `NoticiasDiariasLayout` + guard defensivo en el componente.
+
+### Agregado
+- **`/noticias/archivo`** y **`/noticias/tech/archivo`**: páginas índice de archivo histórico (hasta 60 días), espejo de `/archivo` del home. Componente compartido `NoticiasArchivoIndex`.
+- Chips de noticias: link **"Todo el archivo"** hacia el índice correspondiente.
+
+### Cambiado
+- Chips inline (noticias + home): máximo **4 chips**, solo fechas de los **últimos 7 días** (`MAX_CHIP_DAYS_AGO` en `lib/dates.ts`). Fechas más viejas solo en la página de archivo.
+
+---
+
 ## [0.2.0] — 2026-06-03
 
 ### Cambiado

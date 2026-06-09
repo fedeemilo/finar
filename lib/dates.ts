@@ -27,6 +27,9 @@ export function daysFromTodayArg(fecha: string): number {
   return Math.round((today - target) / 86400000);
 }
 
+/** Máximo de días hacia atrás para chips inline. Más viejo → solo en página de archivo. */
+export const MAX_CHIP_DAYS_AGO = 7;
+
 /** Etiqueta corta y humana para chips/listas: "Hoy", "Ayer", "Hace 3 días", "12 may". */
 export function fechaChipLabel(fecha: string): string {
   const diff = daysFromTodayArg(fecha);

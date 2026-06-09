@@ -1,13 +1,22 @@
 import Link from "next/link";
 import { Archive } from "lucide-react";
-import { fechaChipLabel, todayArg } from "@/lib/dates";
+import { fechaChipLabel, todayArg, daysFromTodayArg, MAX_CHIP_DAYS_AGO } from "@/lib/dates";
 
 export function ArchivoChips({ fechas }: { fechas: string[] }) {
   // BD totalmente vacía → escondemos el bloque (caso muy temprano post-deploy)
   if (fechas.length === 0) return null;
 
   const hoy = todayArg();
-  const anteriores = fechas.filter((f) => f !== hoy);
+  const anteriores = fechas
+    .filter((f) => f !== hoy)
+    .filter((f) => {
+      const days = daysFromTodayArg(f);
+      return days > 0 && days <= MAX_CHIP_DAYS_AGO;
+    });
+  const hayArchivoViejo = fechas.some((f) => {
+    if (f === hoy) return false;
+    return daysFromTodayArg(f) > MAX_CHIP_DAYS_AGO;
+  });
 
   return (
     <section className="rounded-2xl border border-black/[0.12] dark:border-white/5 bg-white/70 dark:bg-white/[0.02] p-5">
@@ -36,6 +45,10 @@ export function ArchivoChips({ fechas }: { fechas: string[] }) {
             </Link>
           ))}
         </div>
+      ) : hayArchivoViejo ? (
+        <p className="text-xs text-gray-500 dark:text-white/40 leading-relaxed">
+          Los últimos {MAX_CHIP_DAYS_AGO} días aparecen acá. Para fechas anteriores, usá el archivo completo.
+        </p>
       ) : (
         <p className="text-xs text-gray-500 dark:text-white/40 leading-relaxed">
           Acá vas a poder revisar cómo cambia el semáforo día a día. Volvé mañana — el primer snapshot se archiva al cierre de hoy.

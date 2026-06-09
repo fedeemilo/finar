@@ -32,7 +32,12 @@ app/
   layout.tsx                        — Font, TooltipProvider, FOUC prevention script
   globals.css                       — Variables CSS dark/light theme, sin @import shadcn
   admin/page.tsx                    — Dashboard de uso (protegido por ?key=)
-  noticias/page.tsx                 — Página de noticias diarias (server component, lee Redis)
+  noticias/page.tsx                 — Noticias general (Redis `noticias:diarias`)
+  noticias/tech/page.tsx            — Noticias tech (Redis `noticias:tech`)
+  noticias/archivo/page.tsx         — Índice archivo general (BD, hasta 60 días)
+  noticias/archivo/[fecha]/page.tsx — Snapshot diario general
+  noticias/tech/archivo/page.tsx    — Índice archivo tech
+  noticias/tech/archivo/[fecha]/page.tsx — Snapshot diario tech
   api/
     analisis/route.ts               — GET on-demand con stale-while-revalidate (fallback; no se llama desde el home ya)
     analisis/revalidate/route.ts    — Endpoint con CRON_SECRET para que n8n regenere el cache
@@ -59,6 +64,9 @@ components/
   ThemeToggle.tsx               — Toggle dark/light mode (sun/moon)
   GlosarioTooltip.tsx           — Tooltip con términos financieros
   NoticiaImagenFallback.tsx     — Imagen con fallback por degradado según fuente (client component)
+  NoticiasArchivoChips.tsx      — Chips inline (≤7 días, máx 4) + link a archivo completo
+  NoticiasArchivoIndex.tsx      — Layout índice `/noticias/archivo` y `/noticias/tech/archivo`
+  FinarBrand.tsx                — Logo + wordmark + badge BETA (navbar home)
   ui/                           — Componentes shadcn/base-ui
 
 n8n/
@@ -184,32 +192,38 @@ Mismo patrón para los 2 endpoints del home:
 - Exportar funciones arbitrarias desde un route file causa error de build
 - Re-exportar tipos sí está permitido (`export type { Foo } from "@/lib/x"`)
 
-### Página de noticias diarias (`/noticias`)
+### Páginas de noticias (`/noticias`, `/noticias/tech`)
 
-La página lee la key `noticias:diarias` de Redis (escrita por el workflow n8n cada mañana).
+- **Live:** Redis keys `noticias:diarias` (general) y `noticias:tech` (tech), escritas por n8n 2x/día.
+- **Archivo por fecha:** snapshots en Postgres (`kind`: `noticias-diarias` | `noticias-tech`) → `/noticias/archivo/[fecha]` y `/noticias/tech/archivo/[fecha]`.
+- **Índice archivo:** `/noticias/archivo` y `/noticias/tech/archivo` listan hasta 60 fechas (`NoticiasArchivoIndex`).
+- **Chips inline:** `NoticiasArchivoChips` muestra máx 4 fechas de los últimos 7 días (`MAX_CHIP_DAYS_AGO` en `lib/dates.ts`) + link "Todo el archivo".
 
-**Estructura del JSON en Redis:**
+**Estructura del JSON en Redis (top3):**
 ```typescript
 {
-  fecha: string;           // "YYYY-MM-DD"
-  resumen: string;         // resumen ejecutivo 3-4 oraciones
+  fecha: string;
+  resumen: string;
   top3: [{
     titulo: string;
-    descripcion: string;   // 4-5 oraciones con contexto y actores
-    fuente: string;        // nombre del medio
-    url: string;           // URL del artículo original
-    imagen: string;        // og:image scrapeada, o "" si no encontró
+    descripcion: string;
+    url: string;
+    imagen: string;        // og:image scrapeada, o ""
+    fuente?: string;       // nombre del medio (legacy / ideal)
+    categoria?: string;    // lo que devuelve Claude hoy (general: politica|economia|…; tech: ai|security|…)
   }];
-  tendencias: string[];    // 3 strings analíticos de 2-3 oraciones c/u
-  conclusion: string;      // 2 oraciones accionables
+  tendencias: string[];
+  conclusion: string;
 }
 ```
 
-**TTL:** 90000 segundos (~25h). Se sobreescribe cada ejecución del workflow (SET sin acumulación).
+`NoticiasDiariasLayout` usa `noticiaFuente()` para resolver label: `fuente` → `categoria` mapeada → hostname de `url` → `"Fuente"`.
+
+**TTL Redis:** 90000 segundos (~25h). Se sobreescribe cada ejecución del workflow (SET sin acumulación).
 
 **Diseño:** editorial estilo portal de noticias — `max-w-7xl`, hero full-width con gradient overlay, grid 2 columnas para noticias secundarias, sidebar de conclusión con bordes de 3px estilo diario.
 
-**`NoticiaImagenFallback`** es un client component que maneja `onError` de la imagen. Fallback por degradado según fuente: LN→azul, Ámbito→naranja, BBC→rojo, Perfil→violeta, Clarín→cyan.
+**`NoticiaImagenFallback`** es un client component que maneja `onError` de la imagen. Fallback por degradado según fuente/categoría. **Siempre** guardar contra `fuente` undefined antes de `.toLowerCase()`.
 
 **Contraste light mode:** nunca usar `text-zinc-400` para texto informativo sobre fondo blanco — mínimo `text-zinc-500` (contrast ratio ~4.6:1). `text-zinc-300` es invisible en light mode.
 
