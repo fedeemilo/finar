@@ -54,3 +54,46 @@ export function fechaLegibleArg(fecha: string): string {
     year: "numeric",
   });
 }
+
+/** Etiqueta compacta para grillas de archivo: "dom, 12 jul". */
+export function fechaDiaCorto(fecha: string): string {
+  const [y, m, d] = fecha.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("es-AR", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+}
+
+/** Label de mes para agrupar archivo: "julio de 2026". */
+export function mesLabel(yyyyMm: string): string {
+  const [y, m] = yyyyMm.split("-").map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString("es-AR", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export interface FechasPorMes {
+  key: string;
+  label: string;
+  fechas: string[];
+}
+
+/** Agrupa fechas YYYY-MM-DD por mes, orden descendente (más reciente primero). */
+export function groupFechasByMonth(fechas: string[]): FechasPorMes[] {
+  const map = new Map<string, string[]>();
+  for (const fecha of fechas) {
+    const key = fecha.slice(0, 7);
+    const bucket = map.get(key);
+    if (bucket) bucket.push(fecha);
+    else map.set(key, [fecha]);
+  }
+  return Array.from(map.entries())
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([key, monthFechas]) => ({
+      key,
+      label: mesLabel(key),
+      fechas: monthFechas,
+    }));
+}

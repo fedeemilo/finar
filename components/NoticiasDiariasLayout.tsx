@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   ExternalLink,
   Zap,
+  Sparkles,
   Newspaper,
   Code2,
   Clock,
@@ -13,6 +14,9 @@ import { NoticiaImagenFallback } from "@/components/NoticiaImagenFallback";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NoticiasTabNav } from "@/components/NoticiasTabNav";
 import { NoticiasArchivoChips } from "@/components/NoticiasArchivoChips";
+import { NoticiasSectionNav } from "@/components/NoticiasSectionNav";
+import { NoticiasResumenCollapsible } from "@/components/NoticiasResumenCollapsible";
+import { TendenciaTexto } from "@/components/TendenciaTexto";
 import { fechaLegibleArg } from "@/lib/dates";
 
 interface NoticiaItem {
@@ -83,6 +87,11 @@ interface VariantMeta {
   heroTitleHover: string;   // hover de título en hero
   zapColor: string;         // color del icono Zap
   emptyAccent: string;      // color del link "Volver al inicio" en EmptyState
+  analysisAccent: string;   // acento sección análisis
+  resumenCard: string;      // fondo/borde card resumen
+  trendBadge: string;       // pill numerada en tendencias
+  conclusionBorder: string; // borde lateral conclusión
+  sectionNavHover: string;  // hover mini-nav secciones
 }
 
 const VARIANTS: Record<Variant, VariantMeta> = {
@@ -101,6 +110,11 @@ const VARIANTS: Record<Variant, VariantMeta> = {
     heroTitleHover: "group-hover:text-emerald-300",
     zapColor: "text-emerald-400",
     emptyAccent: "text-emerald-600 dark:text-emerald-400",
+    analysisAccent: "text-emerald-600 dark:text-emerald-400",
+    resumenCard: "bg-emerald-50/80 dark:bg-emerald-500/5 border-emerald-200/60 dark:border-emerald-500/20",
+    trendBadge: "bg-emerald-500 text-white",
+    conclusionBorder: "border-emerald-500",
+    sectionNavHover: "hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/10",
   },
   tech: {
     liveHref: "/noticias/tech",
@@ -117,6 +131,11 @@ const VARIANTS: Record<Variant, VariantMeta> = {
     heroTitleHover: "group-hover:text-indigo-300",
     zapColor: "text-indigo-400",
     emptyAccent: "text-indigo-600 dark:text-indigo-400",
+    analysisAccent: "text-indigo-600 dark:text-indigo-400",
+    resumenCard: "bg-indigo-50/80 dark:bg-indigo-500/5 border-indigo-200/60 dark:border-indigo-500/20",
+    trendBadge: "bg-indigo-500 text-white",
+    conclusionBorder: "border-indigo-500",
+    sectionNavHover: "hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-500/10",
   },
 };
 
@@ -220,8 +239,11 @@ export function NoticiasDiariasLayout({
         </div>
       </div>
 
+      <NoticiasSectionNav accentHover={meta.sectionNavHover} />
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* ── HERO ── */}
+        {/* ── NOTAS DEL DÍA ── */}
+        <div id="notas" className="scroll-mt-14">
         <section className="mb-10">
           <a href={hero.url} target="_blank" rel="noopener noreferrer" className="group block">
             <div className="relative h-[340px] sm:h-[500px] overflow-hidden bg-zinc-800">
@@ -295,58 +317,86 @@ export function NoticiasDiariasLayout({
             </a>
           ))}
         </section>
+        </div>
 
-        {/* ── BLOQUE INFERIOR ── */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-12">
-          <div className="lg:col-span-2 space-y-10">
-            <div>
-              <h2 className="text-[10px] font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-500 pb-2 mb-4 border-b-2 border-zinc-900 dark:border-white">
-                Resumen ejecutivo
-              </h2>
-              <p className="text-zinc-700 dark:text-zinc-300 text-lg leading-relaxed">
-                {data.resumen}
-              </p>
+        {/* ── ANÁLISIS IA ── */}
+        <div className="scroll-mt-14 pt-4 pb-8">
+          <div className="flex flex-col items-center text-center mb-8">
+            <div className={`inline-flex items-center gap-2 ${meta.analysisAccent} mb-2`}>
+              <Sparkles size={16} strokeWidth={2.5} />
+              <span className="text-xs font-bold tracking-widest uppercase">Análisis del día</span>
+            </div>
+            <p className="text-zinc-500 dark:text-zinc-500 text-sm max-w-lg">
+              Más allá de las notas: qué significa el panorama y qué conviene tener en cuenta.
+            </p>
+          </div>
+
+          <section id="analisis" className="scroll-mt-14 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 mb-6">
+            {/* Resumen — contexto primero */}
+            <div className="order-1 lg:col-span-2 lg:row-start-1">
+              <div className={`rounded-2xl border p-6 sm:p-7 ${meta.resumenCard}`}>
+                <h2 className="text-[10px] font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-3">
+                  En una mirada
+                </h2>
+                <NoticiasResumenCollapsible
+                  text={data.resumen}
+                  accentClass={meta.analysisAccent}
+                />
+              </div>
             </div>
 
-            <div>
-              <h2 className="text-[10px] font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-500 pb-2 mb-6 border-b-2 border-zinc-900 dark:border-white">
-                Tendencias del día
+            {/* Conclusión — antes que tendencias en mobile; sticky en desktop */}
+            <div className="order-2 lg:col-start-3 lg:row-start-1">
+              <div
+                className={`rounded-2xl border-l-4 ${meta.conclusionBorder} bg-zinc-900 dark:bg-zinc-800/90 p-6 lg:sticky lg:top-24`}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <Zap size={16} className={meta.zapColor} strokeWidth={2.5} />
+                  <h2 className="text-[10px] font-bold tracking-widest uppercase text-white/50">
+                    Lo esencial
+                  </h2>
+                </div>
+                <p className="text-white font-semibold text-base leading-relaxed">
+                  {data.conclusion}
+                </p>
+              </div>
+              <div className="mt-5 space-y-2 hidden lg:block">
+                <p className="text-zinc-500 dark:text-zinc-500 text-xs leading-relaxed">
+                  Generado con Claude Opus · {meta.sourcesCredits}.
+                </p>
+                <p className="text-zinc-500 dark:text-zinc-600 text-xs leading-relaxed">
+                  Análisis IA — puede contener errores. No es asesoramiento formal.
+                </p>
+              </div>
+            </div>
+
+          </section>
+
+          <div id="patrones" className="scroll-mt-14">
+              <h2 className="text-[10px] font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-4">
+                Patrones del día
               </h2>
-              <div className="space-y-6">
+              <div className="space-y-3">
                 {data.tendencias.map((tendencia, i) => (
-                  <div key={i} className="flex gap-5 items-start">
-                    <span className="text-5xl font-black text-zinc-200 dark:text-zinc-800 leading-none flex-shrink-0 select-none w-10 text-right">
+                  <div
+                    key={i}
+                    className="flex gap-4 items-start rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 p-5"
+                  >
+                    <span
+                      className={`flex-shrink-0 w-7 h-7 rounded-full ${meta.trendBadge} text-xs font-bold flex items-center justify-center`}
+                    >
                       {i + 1}
                     </span>
-                    <p className="text-zinc-700 dark:text-zinc-300 text-sm leading-relaxed pt-2">
-                      {tendencia}
-                    </p>
+                    <TendenciaTexto texto={tendencia} />
                   </div>
                 ))}
               </div>
-            </div>
           </div>
 
-          <div className="lg:border-l lg:border-zinc-200 lg:dark:border-zinc-800 lg:pl-10">
-            <h2 className="text-[10px] font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-500 pb-2 mb-4 border-b-2 border-zinc-900 dark:border-white">
-              Conclusión clave
-            </h2>
-            <div className="bg-zinc-900 dark:bg-zinc-800 p-6">
-              <Zap size={18} className={`${meta.zapColor} mb-4`} />
-              <p className="text-white font-semibold text-base leading-relaxed">
-                {data.conclusion}
-              </p>
-            </div>
-            <div className="mt-8 pt-6 border-t border-zinc-200 dark:border-zinc-800 space-y-2">
-              <p className="text-zinc-500 dark:text-zinc-500 text-xs leading-relaxed">
-                Resumen generado diariamente con Claude Opus. Fuentes: {meta.sourcesCredits}.
-              </p>
-              <p className="text-zinc-500 dark:text-zinc-600 text-xs leading-relaxed">
-                FinAR no es un medio de comunicación. Este análisis es generado por IA y puede contener errores.
-              </p>
-            </div>
-          </div>
-        </section>
+          <p className="text-zinc-500 dark:text-zinc-600 text-xs leading-relaxed text-center lg:hidden pt-4">
+            Generado con Claude Opus · {meta.sourcesCredits}. Análisis IA — puede contener errores.
+          </p>
+        </div>
       </main>
 
       {/* ── Footer ── */}

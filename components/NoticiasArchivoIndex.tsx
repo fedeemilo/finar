@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, Archive, Calendar } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NoticiasTabNav } from "@/components/NoticiasTabNav";
-import { fechaLegibleArg, daysFromTodayArg } from "@/lib/dates";
+import { ArchivoFechasPorMes } from "@/components/ArchivoFechasPorMes";
 
 type Variant = "general" | "tech";
 
@@ -14,7 +14,6 @@ const VARIANT_META: Record<
     title: string;
     description: string;
     accentHover: string;
-    arrowHover: string;
   }
 > = {
   general: {
@@ -23,7 +22,6 @@ const VARIANT_META: Record<
     title: "Archivo de noticias",
     description: "Todos los resúmenes diarios de noticias generales. Revisá qué pasó cada día.",
     accentHover: "hover:text-emerald-700 dark:hover:text-emerald-300",
-    arrowHover: "group-hover:text-emerald-600 dark:group-hover:text-emerald-400",
   },
   tech: {
     liveHref: "/noticias/tech",
@@ -31,16 +29,8 @@ const VARIANT_META: Record<
     title: "Archivo tech",
     description: "Todos los resúmenes diarios de noticias tech: desarrollo, IA, seguridad e infra.",
     accentHover: "hover:text-indigo-700 dark:hover:text-indigo-300",
-    arrowHover: "group-hover:text-indigo-600 dark:group-hover:text-indigo-400",
   },
 };
-
-function diasDesdeHoyTexto(fecha: string): string {
-  const diff = daysFromTodayArg(fecha);
-  if (diff === 0) return "Hoy";
-  if (diff === 1) return "Ayer";
-  return `hace ${diff} días`;
-}
 
 export function NoticiasArchivoIndex({
   fechas,
@@ -96,30 +86,12 @@ export function NoticiasArchivoIndex({
             </p>
           </div>
         ) : (
-          <ul className="space-y-2">
-            {fechas.map((fecha) => (
-              <li key={fecha}>
-                <Link
-                  href={`${meta.archiveBase}/${fecha}`}
-                  className="group flex items-center justify-between rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 hover:bg-zinc-50 dark:hover:bg-zinc-900 px-5 py-4 transition-colors"
-                >
-                  <div>
-                    <p className="text-zinc-900 dark:text-white font-semibold text-base capitalize">
-                      {fechaLegibleArg(fecha)}
-                    </p>
-                    <p className="text-zinc-500 dark:text-zinc-500 text-xs mt-0.5">
-                      {diasDesdeHoyTexto(fecha)}
-                    </p>
-                  </div>
-                  <span
-                    className={`text-zinc-400 dark:text-zinc-600 ${meta.arrowHover} transition-colors text-sm`}
-                  >
-                    →
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <ArchivoFechasPorMes
+            fechas={fechas}
+            baseHref={meta.archiveBase}
+            style="noticias"
+            accent={variant === "tech" ? "indigo" : "emerald"}
+          />
         )}
       </main>
     </div>

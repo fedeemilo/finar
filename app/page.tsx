@@ -5,6 +5,7 @@ import { Recomendador } from "@/components/Recomendador";
 import { GlosarioTooltip } from "@/components/GlosarioTooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { FinarBrand } from "@/components/FinarBrand";
+import { NoticiasHomeLink } from "@/components/NoticiasHomeLink";
 import { ArchivoChips } from "@/components/ArchivoChips";
 import { ShareButton } from "@/components/ShareButton";
 import { Newspaper } from "lucide-react";
@@ -134,8 +135,25 @@ async function loadHistorialBlue(): Promise<number[]> {
   }
 }
 
+async function loadNoticiasDiariasHeadlines(): Promise<string[]> {
+  try {
+    const [general, tech] = await Promise.all([
+      getCached<{ top3: { titulo: string }[] }>("noticias:diarias"),
+      getCached<{ top3: { titulo: string }[] }>("noticias:tech"),
+    ]);
+    const headlines = [
+      general?.top3?.[0]?.titulo,
+      general?.top3?.[1]?.titulo,
+      tech?.top3?.[0]?.titulo,
+    ].filter((t): t is string => Boolean(t));
+    return Array.from(new Set(headlines));
+  } catch {
+    return [];
+  }
+}
+
 export default async function Home() {
-  const [analisis, noticias, fechasArchivo, historico, snapId, historialBlue] =
+  const [analisis, noticias, fechasArchivo, historico, snapId, historialBlue, diariasHeadlines] =
     await Promise.all([
       loadAnalisis(),
       loadNoticias(),
@@ -143,10 +161,17 @@ export default async function Home() {
       loadHistoricoSemana(),
       loadSnapId(),
       loadHistorialBlue(),
+      loadNoticiasDiariasHeadlines(),
     ]);
 
   const historiales: Record<string, number[]> = {};
   if (historialBlue.length >= 2) historiales.blue = historialBlue;
+
+  const noticiasPreviews = [
+    ...diariasHeadlines,
+    ...(noticias?.slice(0, 2).map((n) => n.titulo) ?? []),
+  ];
+  const uniquePreviews = Array.from(new Set(noticiasPreviews)).slice(0, 4);
 
   return (
     <div
@@ -161,7 +186,7 @@ export default async function Home() {
             <LastUpdated timestamp={analisis?.timestamp} />
             <Link
               href="/noticias"
-              className="flex items-center gap-1.5 text-stone-500 dark:text-white/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors text-xs font-medium"
+              className="hidden sm:flex items-center gap-1.5 rounded-full border border-emerald-500/30 dark:border-emerald-400/25 bg-emerald-500/10 dark:bg-emerald-400/10 px-3 py-1.5 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/15 dark:hover:bg-emerald-400/15 transition-colors text-xs font-semibold"
             >
               <Newspaper size={14} />
               Noticias
@@ -190,6 +215,9 @@ export default async function Home() {
             Tu amigo que sabe de finanzas te explica en simple. Sin jerga, sin
             gráficos raros.
           </p>
+          <div className="mt-5 max-w-sm mx-auto">
+            <NoticiasHomeLink previews={uniquePreviews} />
+          </div>
         </section>
 
         {/* Semáforo de activos */}

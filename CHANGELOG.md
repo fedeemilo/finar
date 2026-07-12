@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.2] — 2026-07-12
+
+### Agregado
+- **Home → Noticias más visible**: card CTA bajo el hero con ticker de titulares en vivo (`NoticiasHomeLink`), pill en navbar desktop, headlines desde Redis diarias/tech.
+- **Análisis noticias mejorado**: separador "Análisis del día", mini-nav sticky solo en mobile (`Notas · Análisis · Patrones`), resumen colapsable en mobile, primera oración en negrita en tendencias (`TendenciaTexto`).
+- **Archivo por mes**: `ArchivoFechasPorMes` agrupa fechas en acordeones mensuales en `/archivo`, `/noticias/archivo` y `/noticias/tech/archivo`.
+
+### Corregido
+- **Recomendador en mobile**: eliminado skeleton `animate-pulse` y `backdrop-blur` que titilaban al cargar.
+- **Ticker home**: animación siempre activa cuando hay titulares (bug en detección de overflow).
+
+### Cambiado
+- Sección análisis en noticias: reorden mobile (resumen → lo esencial → patrones), anchors `#analisis` / `#patrones` separados, mini-nav oculta en desktop.
+- Prompts n8n (`news_summary`, `tech_summary`): tendencias con primera oración autocontenida para mejor parsing en UI.
+- Animación ticker: 24s por ciclo.
+
+---
+
 ## [0.2.1] — 2026-06-09
 
 ### Corregido

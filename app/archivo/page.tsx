@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, Archive, Calendar } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { loadAvailableDates } from "@/lib/db";
-import { fechaLegibleArg, daysFromTodayArg } from "@/lib/dates";
+import { ArchivoFechasPorMes } from "@/components/ArchivoFechasPorMes";
 
 export const dynamic = "force-dynamic";
 
@@ -10,13 +10,6 @@ export const metadata = {
   title: "FinAR · Archivo histórico",
   description: "Todos los días con análisis disponible. Mirá cómo se veía el mercado argentino día por día según FinAR.",
 };
-
-function diasDesdeHoyTexto(fecha: string): string {
-  const diff = daysFromTodayArg(fecha);
-  if (diff === 0) return "Hoy";
-  if (diff === 1) return "Ayer";
-  return `hace ${diff} días`;
-}
 
 export default async function ArchivoIndexPage() {
   const fechas = await loadAvailableDates(60);
@@ -63,28 +56,7 @@ export default async function ArchivoIndexPage() {
             </p>
           </div>
         ) : (
-          <ul className="space-y-2">
-            {fechas.map((fecha) => (
-              <li key={fecha}>
-                <Link
-                  href={`/archivo/${fecha}`}
-                  className="flex items-center justify-between rounded-xl border border-black/[0.12] dark:border-white/5 bg-white/70 dark:bg-white/[0.02] hover:bg-white dark:hover:bg-white/[0.05] px-5 py-4 transition-colors group"
-                >
-                  <div>
-                    <p className="text-gray-800 dark:text-white/90 font-semibold text-base capitalize">
-                      {fechaLegibleArg(fecha)}
-                    </p>
-                    <p className="text-gray-500 dark:text-white/40 text-xs mt-0.5">
-                      {diasDesdeHoyTexto(fecha)}
-                    </p>
-                  </div>
-                  <span className="text-gray-400 dark:text-white/30 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors text-sm">
-                    →
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <ArchivoFechasPorMes fechas={fechas} baseHref="/archivo" style="home" />
         )}
       </main>
     </div>

@@ -66,6 +66,11 @@ components/
   NoticiaImagenFallback.tsx     — Imagen con fallback por degradado según fuente (client component)
   NoticiasArchivoChips.tsx      — Chips inline (≤7 días, máx 4) + link a archivo completo
   NoticiasArchivoIndex.tsx      — Layout índice `/noticias/archivo` y `/noticias/tech/archivo`
+  ArchivoFechasPorMes.tsx       — Acordeones mensuales para páginas de archivo
+  NoticiasHomeLink.tsx          — CTA home → /noticias con ticker de titulares (client)
+  NoticiasSectionNav.tsx        — Mini-nav sticky mobile (Notas · Análisis · Patrones)
+  NoticiasResumenCollapsible.tsx — Resumen colapsable en mobile (client)
+  TendenciaTexto.tsx            — Primera oración en negrita en cards de tendencias
   FinarBrand.tsx                — Logo + wordmark + badge BETA (navbar home)
   ui/                           — Componentes shadcn/base-ui
 
@@ -198,6 +203,9 @@ Mismo patrón para los 2 endpoints del home:
 - **Archivo por fecha:** snapshots en Postgres (`kind`: `noticias-diarias` | `noticias-tech`) → `/noticias/archivo/[fecha]` y `/noticias/tech/archivo/[fecha]`.
 - **Índice archivo:** `/noticias/archivo` y `/noticias/tech/archivo` listan hasta 60 fechas (`NoticiasArchivoIndex`).
 - **Chips inline:** `NoticiasArchivoChips` muestra máx 4 fechas de los últimos 7 días (`MAX_CHIP_DAYS_AGO` en `lib/dates.ts`) + link "Todo el archivo".
+- **Índice archivo por mes:** `ArchivoFechasPorMes` agrupa fechas en acordeones (`groupFechasByMonth` en `lib/dates.ts`).
+- **Análisis IA (bloque inferior):** separador visual, orden mobile resumen → lo esencial → patrones, `#analisis` / `#patrones` como anchors separados. Mini-nav `NoticiasSectionNav` solo en mobile (`lg:hidden`).
+- **Home CTA noticias:** `NoticiasHomeLink` lee titulares de `noticias:diarias` + `noticias:tech` y muestra ticker (`animate-ticker` en tailwind.config.ts).
 
 **Estructura del JSON en Redis (top3):**
 ```typescript

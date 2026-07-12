@@ -117,7 +117,7 @@ function downloadPDF(
 function Paywall({ ttl }: { ttl: number }) {
   const renewalTime = getRenewalTime(ttl);
   return (
-    <div className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.03] backdrop-blur-sm p-8 text-center">
+    <div className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.03] p-8 text-center">
       <div className="flex justify-center mb-4">
         <Lock size={36} className="text-gray-400 dark:text-white/40" strokeWidth={1.75} />
       </div>
@@ -141,9 +141,8 @@ function Paywall({ ttl }: { ttl: number }) {
 
 // ── Componente principal ─────────────────────────────────────────────────────
 export function Recomendador() {
-  const [uses, setUses] = useState(0);
+  const [uses, setUses] = useState(() => getLocalUses());
   const [ttl, setTtl] = useState(-1);
-  const [synced, setSynced] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<Currency>("ARS");
@@ -152,24 +151,19 @@ export function Recomendador() {
   const [result, setResult] = useState<RecomendacionResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Al montar: leer localStorage y sincronizar con el servidor
+  // Al montar: sincronizar usos con el servidor (sin skeleton — evita pulse en mobile)
   useEffect(() => {
-    const local = getLocalUses();
-    setUses(local);
-
     fetch("/api/recomendar")
       .then((r) => r.json())
       .then((data: { used: number; limit: number; ttl: number }) => {
         const serverUses = data.used ?? 0;
-        // Si la key de Redis expiró (ttl <= 0), el límite se renovó — confiar en servidor.
-        // Solo tomar el mayor cuando la key existe (ttl > 0) para manejar race conditions de sesión.
+        const local = getLocalUses();
         const real = data.ttl > 0 ? Math.max(local, serverUses) : serverUses;
         setUses(real);
         setLocalUses(real);
         if (data.ttl > 0) setTtl(data.ttl);
       })
-      .catch(() => {})
-      .finally(() => setSynced(true));
+      .catch(() => {});
   }, []);
 
   const handleAmountSubmit = (e: React.FormEvent) => {
@@ -222,27 +216,13 @@ export function Recomendador() {
 
   const remaining = Math.max(0, FREE_LIMIT - uses);
 
-  // Skeleton mientras sincroniza
-  if (!synced) {
-    return (
-      <div className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.03] p-6 animate-pulse">
-        <div className="h-4 w-1/3 bg-black/10 dark:bg-white/10 rounded-full mb-6" />
-        <div className="space-y-3">
-          <div className="h-10 bg-black/10 dark:bg-white/10 rounded-xl" />
-          <div className="h-10 bg-black/10 dark:bg-white/10 rounded-xl" />
-          <div className="h-12 bg-black/10 dark:bg-white/10 rounded-xl" />
-        </div>
-      </div>
-    );
-  }
-
   // Paywall
   if (uses >= FREE_LIMIT && !result) return <Paywall ttl={ttl} />;
 
   // Vista de resultado
   if (result) {
     return (
-      <div className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.03] backdrop-blur-sm p-6">
+      <div className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.03] p-6">
         <div className="mb-5">
           <p className="text-gray-800 dark:text-white/90 font-medium leading-relaxed">{result.resumen}</p>
           {result.advertencia && (
@@ -311,7 +291,7 @@ export function Recomendador() {
 
   // Wizard
   return (
-    <div className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.03] backdrop-blur-sm p-6">
+    <div className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.03] p-6">
       {/* Uses indicator */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex gap-2">
