@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3] — 2026-07-12
+
+### Agregado
+- **Vercel Web Analytics**: `@vercel/analytics` + `<Analytics />` en `app/layout.tsx`.
+
+---
+
 ## [0.2.2] — 2026-07-12
 
 ### Agregado

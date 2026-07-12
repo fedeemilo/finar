@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -42,6 +43,7 @@ export default function RootLayout({
         style={{ fontFamily: "var(--font-sans), sans-serif" }}
       >
         <TooltipProvider delay={300}>{children}</TooltipProvider>
+        <Analytics />
       </body>
     </html>
   );
