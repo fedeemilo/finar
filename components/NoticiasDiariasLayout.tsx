@@ -290,37 +290,47 @@ export function NoticiasDiariasLayout({
         {/* ── NOTAS DEL DÍA ── */}
         <div id="notas" className="scroll-mt-14">
         <section className="mb-10">
-          <a href={hero.url} target="_blank" rel="noopener noreferrer" className="group block">
-            <div className="relative h-[340px] sm:h-[500px] overflow-hidden bg-zinc-800">
-              <div className="absolute inset-0">
-                <NoticiaImagenFallback
-                  imagen={hero.imagen}
-                  titulo={hero.titulo}
-                  fuente={noticiaFuente(hero)}
-                />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-black/10" />
-              <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
-                <span
-                  className={`inline-block ${meta.badgeBg} text-white text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 mb-4`}
-                >
-                  {noticiaFuente(hero)}
-                </span>
+          <div className="relative overflow-hidden bg-zinc-800 min-h-[340px] sm:min-h-[460px]">
+            <div className="absolute inset-0">
+              <NoticiaImagenFallback
+                imagen={hero.imagen}
+                titulo={hero.titulo}
+                fuente={noticiaFuente(hero)}
+              />
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/15" />
+            <div className="relative z-10 flex flex-col justify-end p-6 sm:p-10 min-h-[340px] sm:min-h-[460px]">
+              <span
+                className={`inline-block self-start ${meta.badgeBg} text-white text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 mb-4`}
+              >
+                {noticiaFuente(hero)}
+              </span>
+              <a
+                href={hero.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group max-w-4xl"
+              >
                 <h2
-                  className={`text-white text-2xl sm:text-4xl font-black leading-tight mb-3 ${meta.heroTitleHover} transition-colors duration-200 max-w-4xl`}
+                  className={`text-white text-2xl sm:text-4xl font-black leading-tight mb-3 ${meta.heroTitleHover} transition-colors duration-200`}
                 >
                   {hero.titulo}
                 </h2>
-                <p className="text-white/80 text-sm sm:text-base leading-relaxed max-w-3xl line-clamp-2 sm:line-clamp-3">
-                  {hero.descripcion}
-                </p>
-                <div className="flex items-center gap-1.5 mt-5 text-white/50 text-xs">
-                  <ExternalLink size={11} />
-                  <span>Leer nota completa</span>
-                </div>
-              </div>
+              </a>
+              <p className="text-white/80 text-sm sm:text-base leading-relaxed max-w-3xl">
+                {hero.descripcion}
+              </p>
+              <a
+                href={hero.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 mt-5 text-white/55 hover:text-white/80 text-xs transition-colors self-start"
+              >
+                <ExternalLink size={11} />
+                <span>Leer nota completa</span>
+              </a>
             </div>
-          </a>
+          </div>
         </section>
 
         {/* ── NOTICIAS SECUNDARIAS ── */}

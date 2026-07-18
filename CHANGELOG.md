@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.6] — 2026-07-18
+
+### Mejorado
+- **Hero noticias**: resumen completo sin truncar; el link externo queda solo en título y "Leer nota completa".
+
+---
+
 ## [0.2.5] — 2026-07-18
 
 ### Mejorado
