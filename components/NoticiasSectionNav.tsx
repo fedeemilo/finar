@@ -1,6 +1,6 @@
 "use client";
 
-const MOBILE_SECTIONS = [
+const BASE_SECTIONS = [
   { id: "notas", label: "Notas" },
   { id: "analisis", label: "Análisis" },
   { id: "patrones", label: "Patrones" },
@@ -32,15 +32,25 @@ function NavLinks({
   );
 }
 
-export function NoticiasSectionNav({ accentHover }: { accentHover: string }) {
+export function NoticiasSectionNav({
+  accentHover,
+  showMercado = false,
+}: {
+  accentHover: string;
+  showMercado?: boolean;
+}) {
+  const sections = showMercado
+    ? [...BASE_SECTIONS, { id: "mercado", label: "Mercado" }]
+    : [...BASE_SECTIONS];
+
   return (
     <nav
       aria-label="Secciones del día"
-      className="sticky top-0 z-40 border-b border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md lg:hidden"
+      className="sticky top-14 z-40 border-b border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md lg:hidden"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-center gap-1 py-2.5">
-          <NavLinks sections={MOBILE_SECTIONS} accentHover={accentHover} />
+          <NavLinks sections={sections} accentHover={accentHover} />
         </div>
       </div>
     </nav>

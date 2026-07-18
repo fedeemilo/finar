@@ -5,15 +5,15 @@ export function TendenciaTexto({ texto }: { texto: string }) {
 
   if (!rest) {
     return (
-      <p className="text-zinc-700 dark:text-zinc-300 text-sm leading-relaxed pt-0.5 font-semibold">
+      <p className="text-zinc-800 dark:text-zinc-200 text-sm leading-relaxed font-medium">
         {lead}
       </p>
     );
   }
 
   return (
-    <p className="text-zinc-700 dark:text-zinc-300 text-sm leading-relaxed pt-0.5">
-      <span className="font-semibold text-zinc-900 dark:text-zinc-100">{lead}</span> {rest}
+    <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">
+      <span className="font-medium text-zinc-900 dark:text-zinc-100">{lead}</span> {rest}
     </p>
   );
 }

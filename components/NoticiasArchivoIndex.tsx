@@ -17,14 +17,14 @@ const VARIANT_META: Record<
   }
 > = {
   general: {
-    liveHref: "/noticias",
+    liveHref: "/",
     archiveBase: "/noticias/archivo",
     title: "Archivo de noticias",
     description: "Todos los resúmenes diarios de noticias generales. Revisá qué pasó cada día.",
     accentHover: "hover:text-emerald-700 dark:hover:text-emerald-300",
   },
   tech: {
-    liveHref: "/noticias/tech",
+    liveHref: "/?tab=tech",
     archiveBase: "/noticias/tech/archivo",
     title: "Archivo tech",
     description: "Todos los resúmenes diarios de noticias tech: desarrollo, IA, seguridad e infra.",

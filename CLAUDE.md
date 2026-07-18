@@ -28,12 +28,12 @@ Repo: https://github.com/fedeemilo/finar
 
 ```
 app/
-  page.tsx                          — Página principal (async server component, lee Redis con fallback on-demand)
-  layout.tsx                        — Font, TooltipProvider, FOUC prevention script
+  page.tsx                          — Home unificada editorial (diarias/tech + semáforo strip + Invertir modal)
+  layout.tsx                        — Font, TooltipProvider, Analytics, FOUC prevention script
   globals.css                       — Variables CSS dark/light theme, sin @import shadcn
   admin/page.tsx                    — Dashboard de uso (protegido por ?key=)
-  noticias/page.tsx                 — Noticias general (Redis `noticias:diarias`)
-  noticias/tech/page.tsx            — Noticias tech (Redis `noticias:tech`)
+  noticias/page.tsx                 — Redirect → `/`
+  noticias/tech/page.tsx            — Redirect → `/?tab=tech`
   noticias/archivo/page.tsx         — Índice archivo general (BD, hasta 60 días)
   noticias/archivo/[fecha]/page.tsx — Snapshot diario general
   noticias/tech/archivo/page.tsx    — Índice archivo tech
@@ -56,23 +56,23 @@ lib/
   constants.ts              — FREE_LIMIT, LIMIT_TTL_SECONDS (safe para client+server)
 
 components/
-  Semaforo.tsx                  — Server component: recibe `analisis` prop, renderiza grilla (sin fetch propio)
-  AssetCard.tsx                 — Client component: contiene ASSET_META (íconos Lucide), maneja expansión
-  NoticiaCard.tsx               — Client component: card de noticia con "Para vos"
-  NoticiasSection.tsx           — Server component: recibe `noticias` prop (sin fetch propio)
+  NoticiasDiariasLayout.tsx     — Shell editorial (home + archivo): top3, análisis, slots header/mercado
+  SemaforoStrip.tsx             — Strip compacto de activos (expandible a Semaforo completo)
+  Semaforo.tsx                  — Grilla de AssetCards (detalle / archivo histórico)
+  AssetCard.tsx                 — Client: ASSET_META + expansión
+  InvertirModal.tsx             — CTA header + Dialog con Recomendador
   Recomendador.tsx              — Wizard 2 pasos + resultado + paywall
-  ThemeToggle.tsx               — Toggle dark/light mode (sun/moon)
-  GlosarioTooltip.tsx           — Tooltip con términos financieros
-  NoticiaImagenFallback.tsx     — Imagen con fallback por degradado según fuente (client component)
+  ThemeToggle.tsx               — Toggle dark/light mode
+  NoticiaImagenFallback.tsx     — Imagen con fallback por degradado (client)
   NoticiasArchivoChips.tsx      — Chips inline (≤7 días, máx 4) + link a archivo completo
   NoticiasArchivoIndex.tsx      — Layout índice `/noticias/archivo` y `/noticias/tech/archivo`
   ArchivoFechasPorMes.tsx       — Acordeones mensuales para páginas de archivo
-  NoticiasHomeLink.tsx          — CTA home → /noticias con ticker de titulares (client)
-  NoticiasSectionNav.tsx        — Mini-nav sticky mobile (Notas · Análisis · Patrones)
-  NoticiasResumenCollapsible.tsx — Resumen colapsable en mobile (client)
-  TendenciaTexto.tsx            — Primera oración en negrita en cards de tendencias
-  FinarBrand.tsx                — Logo + wordmark + badge BETA (navbar home)
-  ui/                           — Componentes shadcn/base-ui
+  NoticiasTabNav.tsx            — Tabs General `/` · Tech `/?tab=tech`
+  NoticiasSectionNav.tsx        — Mini-nav sticky mobile (Notas · Análisis · Patrones · Mercado)
+  NoticiasResumenCollapsible.tsx — Resumen colapsable en mobile
+  TendenciaTexto.tsx            — Primera oración en negrita en tendencias
+  FinarBrand.tsx                — Logo + wordmark + badge BETA
+  ui/                           — Componentes shadcn/base-ui (incluye dialog)
 
 n8n/
   news_summary_n8n.json              — Refresca `noticias:diarias` (Opus + scraping og:image), 2x/día (09:00 + 18:00 ARG)
@@ -161,17 +161,19 @@ Ruta: `/admin?key={ADMIN_SECRET}`
 - Fondo de cards en light mode: `bg-white/80` (NO `bg-black/[0.04]` — es invisible sobre fondo crema)
 - Bordes en light mode: `border-black/[0.12]` (NO `border-black/[0.07]` — muy sutil)
 
-### Home server-rendered desde Redis
-A partir de v0.2.0 la home no fetchea desde el cliente. `app/page.tsx` es async server component que:
-1. Llama `loadAnalisis()` + `loadNoticias()` en `Promise.all`
-2. Cada loader: fresh cache → stale cache → fallback on-demand (genera con Claude + escribe Redis)
-3. Pasa la data como prop a `<Semaforo analisis={...} />` y `<NoticiasSection noticias={...} />`
+### Home unificada (v0.2.4+)
+`/` es el portal editorial (`max-w-7xl`), no el dashboard estrecho anterior.
 
-El HTML llega con contenido en el primer paint — sin skeletons. Si los workflows n8n de refresh están corriendo, el fallback on-demand casi nunca se ejecuta (Redis siempre tiene fresh). Si Redis está vacío Y Claude falla, se renderiza un mensaje "no se pudo cargar" inline (no EmptyState — el home tiene que tener contenido).
+1. Lee Redis `noticias:diarias` o `noticias:tech` según `?tab=tech`
+2. Carga análisis (`analisis:semaforo`) para el strip de mercado
+3. Renderiza `<NoticiasDiariasLayout homeMode ... mercadoSlot={<SemaforoStrip />} headerActions={<InvertirModal />} />`
 
-`force-dynamic` en page.tsx evita que Next.js intente cachear el HTML.
-
-`LastUpdated` del header usa el `timestamp` del análisis con `timeZone: "America/Argentina/Buenos_Aires"` fijo — consistente entre server y client, sin hydration mismatch.
+- Tabs: General → `/`, Tech → `/?tab=tech`
+- `/noticias` y `/noticias/tech` solo redirigen a la home
+- Recomendador vive en modal (no en el scroll)
+- Semáforo: strip compacto debajo del análisis; detalle al expandir
+- `force-dynamic` en page.tsx
+- Pipeline `noticias:processed` ya no se muestra en UI (puede seguir en Redis/cron)
 
 ### Stale-while-revalidate (análisis + noticias)
 Mismo patrón para los 2 endpoints del home:
@@ -197,15 +199,16 @@ Mismo patrón para los 2 endpoints del home:
 - Exportar funciones arbitrarias desde un route file causa error de build
 - Re-exportar tipos sí está permitido (`export type { Foo } from "@/lib/x"`)
 
-### Páginas de noticias (`/noticias`, `/noticias/tech`)
+### Páginas de noticias (live en `/`, archivo en `/noticias/...`)
 
-- **Live:** Redis keys `noticias:diarias` (general) y `noticias:tech` (tech), escritas por n8n 2x/día.
-- **Archivo por fecha:** snapshots en Postgres (`kind`: `noticias-diarias` | `noticias-tech`) → `/noticias/archivo/[fecha]` y `/noticias/tech/archivo/[fecha]`.
+- **Live:** `/` (general) y `/?tab=tech` — Redis `noticias:diarias` / `noticias:tech`, escritas por n8n 2x/día.
+- **Redirects:** `/noticias` → `/`, `/noticias/tech` → `/?tab=tech`.
+- **Archivo por fecha:** Postgres (`kind`: `noticias-diarias` | `noticias-tech`) → `/noticias/archivo/[fecha]` y `/noticias/tech/archivo/[fecha]`.
 - **Índice archivo:** `/noticias/archivo` y `/noticias/tech/archivo` listan hasta 60 fechas (`NoticiasArchivoIndex`).
-- **Chips inline:** `NoticiasArchivoChips` muestra máx 4 fechas de los últimos 7 días (`MAX_CHIP_DAYS_AGO` en `lib/dates.ts`) + link "Todo el archivo".
-- **Índice archivo por mes:** `ArchivoFechasPorMes` agrupa fechas en acordeones (`groupFechasByMonth` en `lib/dates.ts`).
-- **Análisis IA (bloque inferior):** separador visual, orden mobile resumen → lo esencial → patrones, `#analisis` / `#patrones` como anchors separados. Mini-nav `NoticiasSectionNav` solo en mobile (`lg:hidden`).
-- **Home CTA noticias:** `NoticiasHomeLink` lee titulares de `noticias:diarias` + `noticias:tech` y muestra ticker (`animate-ticker` en tailwind.config.ts).
+- **Chips inline:** `NoticiasArchivoChips` muestra máx 4 fechas de los últimos 7 días (`MAX_CHIP_DAYS_AGO`) + link "Todo el archivo".
+- **Índice archivo por mes:** `ArchivoFechasPorMes` (`groupFechasByMonth` en `lib/dates.ts`).
+- **Análisis IA:** separador visual, orden mobile resumen → lo esencial → patrones, `#analisis` / `#patrones` separados. Mini-nav mobile + Mercado si hay strip.
+- **Mercado:** `SemaforoStrip` debajo del análisis en home.
 
 **Estructura del JSON en Redis (top3):**
 ```typescript

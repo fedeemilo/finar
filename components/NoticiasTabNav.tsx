@@ -10,7 +10,7 @@ export function NoticiasTabNav({ active }: Props) {
     <div className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 flex">
         <Link
-          href="/noticias"
+          href="/"
           className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors duration-150 ${
             active === "general"
               ? "border-emerald-500 text-emerald-600 dark:text-emerald-400"
@@ -21,7 +21,7 @@ export function NoticiasTabNav({ active }: Props) {
           General
         </Link>
         <Link
-          href="/noticias/tech"
+          href="/?tab=tech"
           className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors duration-150 ${
             active === "tech"
               ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"

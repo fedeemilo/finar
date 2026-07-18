@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.4] — 2026-07-18
+
+### Cambiado
+- **Home unificada estilo noticias**: `/` pasa a ser el portal editorial (`max-w-7xl`) con top3 + análisis IA. Tabs General / Tech vía `?tab=tech`.
+- **Semáforo degradado**: strip compacto "Mercado en 30 segundos" debajo del análisis (`SemaforoStrip`), expandible al detalle completo.
+- **Recomendador en modal**: CTA "¿En qué invierto?" en el header (`InvertirModal`); sale del scroll principal.
+- `/noticias` → redirect a `/`; `/noticias/tech` → `/?tab=tech`. Archivos `/noticias/archivo*` se mantienen.
+
+### Agregado
+- `components/ui/dialog.tsx` (Base UI), `SemaforoStrip`, `InvertirModal`.
+
+### Cambiado
+- Análisis / patrones / mercado: estilo más minimal (sin cards tintadas); acento teal de marca.
+- Recomendador: CTAs, segmento de moneda, perfiles y barras en teal (`emerald`).
+
+---
+
 ## [0.2.3] — 2026-07-12
 
 ### Agregado

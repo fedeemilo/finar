@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Lock } from "lucide-react";
+import { Lock, Download, Check } from "lucide-react";
 import type { RecomendacionResponse } from "@/app/api/recomendar/route";
 import { FREE_LIMIT } from "@/lib/constants";
 
@@ -21,9 +21,9 @@ function getRenewalTime(ttlSeconds: number): string {
 }
 
 const PROFILES = [
-  { id: "low" as RiskProfile, emoji: "🛡️", label: "Quiero proteger lo que tengo", sublabel: "Mínimo riesgo" },
-  { id: "medium" as RiskProfile, emoji: "📈", label: "Quiero hacer crecer mi plata", sublabel: "Riesgo moderado" },
-  { id: "high" as RiskProfile, emoji: "🚀", label: "Puedo arriesgar para ganar más", sublabel: "Mayor riesgo, mayor potencial" },
+  { id: "low" as RiskProfile, label: "Proteger lo que tengo", sublabel: "Mínimo riesgo" },
+  { id: "medium" as RiskProfile, label: "Hacer crecer la plata", sublabel: "Riesgo moderado" },
+  { id: "high" as RiskProfile, label: "Arriesgar para ganar más", sublabel: "Mayor potencial" },
 ];
 
 const PROFILE_LABELS: Record<RiskProfile, string> = {
@@ -52,46 +52,51 @@ function downloadPDF(
   currency: Currency,
   riskProfile: RiskProfile
 ) {
-  const fecha = new Date().toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" });
+  const fecha = new Date().toLocaleDateString("es-AR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   const itemsHTML = result.items
-    .map((item) => `
+    .map(
+      (item) => `
       <div class="item">
         <div class="item-header">
-          <span class="item-emoji">${item.emoji}</span>
           <span class="item-nombre">${item.activo}</span>
           <span class="item-pct">${item.porcentaje}%</span>
         </div>
         <div class="bar-wrap"><div class="bar" style="width:${item.porcentaje}%"></div></div>
         <p class="item-desc">${item.descripcion}</p>
-      </div>`)
+      </div>`
+    )
     .join("");
 
   const advertenciaHTML = result.advertencia
-    ? `<div class="advertencia">⚠️ ${result.advertencia}</div>`
+    ? `<div class="advertencia">${result.advertencia}</div>`
     : "";
 
   const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Recomendación FinAR — ${fecha}</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:48px;color:#111}
-  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:36px;border-bottom:2px solid #00c896;padding-bottom:16px}
-  .logo{font-size:28px;font-weight:900;letter-spacing:-1px}.logo span{color:#00c896}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:36px;border-bottom:2px solid #111;padding-bottom:16px}
+  .logo{font-size:28px;font-weight:900;letter-spacing:-1px}
   .meta{text-align:right;font-size:13px;color:#666;line-height:1.6}.meta strong{color:#111}
   h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#999;margin-bottom:10px}
-  .resumen{font-size:16px;color:#222;line-height:1.6;margin-bottom:28px;padding:16px 20px;background:#f8f8f8;border-radius:10px;border-left:3px solid #00c896}
+  .resumen{font-size:16px;color:#222;line-height:1.6;margin-bottom:28px;padding:16px 20px;background:#f5f5f5;border-radius:8px;border-left:3px solid #111}
   .item{margin-bottom:22px}
   .item-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-  .item-emoji{font-size:20px}.item-nombre{font-size:15px;font-weight:600;flex:1}
-  .item-pct{font-size:16px;font-weight:800;color:#00c896}
-  .bar-wrap{height:8px;background:#eee;border-radius:4px;overflow:hidden;margin-bottom:6px}
-  .bar{height:100%;background:linear-gradient(90deg,#00c896,#00e6aa);border-radius:4px}
+  .item-nombre{font-size:15px;font-weight:600;flex:1}
+  .item-pct{font-size:16px;font-weight:800}
+  .bar-wrap{height:6px;background:#eee;border-radius:3px;overflow:hidden;margin-bottom:6px}
+  .bar{height:100%;background:#111;border-radius:3px}
   .item-desc{font-size:13px;color:#777;line-height:1.5}
-  .advertencia{margin-top:24px;padding:14px 18px;background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;font-size:13px;color:#92400e;line-height:1.6}
+  .advertencia{margin-top:24px;padding:14px 18px;background:#f5f5f5;border:1px solid #ddd;border-radius:8px;font-size:13px;color:#444;line-height:1.6}
   .disclaimer{margin-top:40px;padding-top:20px;border-top:1px solid #eee;font-size:11px;color:#bbb;line-height:1.6}
 </style></head><body>
   <div class="header">
-    <div class="logo">Fin<span>AR</span></div>
+    <div class="logo">FinAR</div>
     <div class="meta">
       <div>${fecha}</div>
       <div>Monto: <strong>${currency === "ARS" ? "$" : "USD "}${Number(amount).toLocaleString("es-AR")} ${currency}</strong></div>
@@ -113,33 +118,43 @@ function downloadPDF(
   setTimeout(() => win.print(), 400);
 }
 
-// ── Paywall ─────────────────────────────────────────────────────────────────
 function Paywall({ ttl }: { ttl: number }) {
   const renewalTime = getRenewalTime(ttl);
   return (
-    <div className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.03] p-8 text-center">
-      <div className="flex justify-center mb-4">
-        <Lock size={36} className="text-gray-400 dark:text-white/40" strokeWidth={1.75} />
-      </div>
-      <h3 className="text-gray-800 dark:text-white font-bold text-lg mb-2">
-        Usaste tus 3 recomendaciones gratuitas
+    <div className="py-6 text-center">
+      <Lock size={28} className="mx-auto mb-4 text-zinc-400 dark:text-zinc-600" strokeWidth={1.5} />
+      <h3 className="text-zinc-900 dark:text-white font-semibold text-base mb-2">
+        Usaste tus 3 consultas gratuitas
       </h3>
-      <p className="text-gray-500 dark:text-white/50 text-sm leading-relaxed mb-6 max-w-xs mx-auto">
+      <p className="text-zinc-500 dark:text-zinc-500 text-sm leading-relaxed max-w-xs mx-auto">
         {renewalTime ? (
-          <>Tus consultas se renuevan a las <span className="text-gray-700 dark:text-white/70 font-medium">{renewalTime}</span>.</>
+          <>
+            Se renuevan a las{" "}
+            <span className="text-zinc-800 dark:text-zinc-300 font-medium">{renewalTime}</span>.
+          </>
         ) : (
           <>El plan gratuito incluye 3 consultas cada 12 horas.</>
         )}
-      </p>
-
-      <p className="text-gray-500 dark:text-white/20 text-xs">
-        Podés volver a consultar cuando se renueve el límite.
       </p>
     </div>
   );
 }
 
-// ── Componente principal ─────────────────────────────────────────────────────
+function StepDots({ step }: { step: 1 | 2 }) {
+  return (
+    <div className="flex gap-1.5">
+      {[1, 2].map((s) => (
+        <div
+          key={s}
+          className={`h-0.5 w-8 rounded-full transition-colors ${
+            s <= step ? "bg-emerald-500" : "bg-zinc-200 dark:bg-zinc-800"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function Recomendador() {
   const [uses, setUses] = useState(() => getLocalUses());
   const [ttl, setTtl] = useState(-1);
@@ -151,7 +166,6 @@ export function Recomendador() {
   const [result, setResult] = useState<RecomendacionResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Al montar: sincronizar usos con el servidor (sin skeleton — evita pulse en mobile)
   useEffect(() => {
     fetch("/api/recomendar")
       .then((r) => r.json())
@@ -216,130 +230,132 @@ export function Recomendador() {
 
   const remaining = Math.max(0, FREE_LIMIT - uses);
 
-  // Paywall
   if (uses >= FREE_LIMIT && !result) return <Paywall ttl={ttl} />;
 
-  // Vista de resultado
   if (result) {
     return (
-      <div className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.03] p-6">
-        <div className="mb-5">
-          <p className="text-gray-800 dark:text-white/90 font-medium leading-relaxed">{result.resumen}</p>
-          {result.advertencia && (
-            <div className="mt-3 p-3 rounded-xl bg-amber-400/10 border border-amber-400/20">
-              <p className="text-amber-600 dark:text-amber-300 text-sm">⚠️ {result.advertencia}</p>
-            </div>
-          )}
-        </div>
+      <div>
+        <p className="text-zinc-800 dark:text-zinc-200 text-sm leading-relaxed mb-5">
+          {result.resumen}
+        </p>
+        {result.advertencia && (
+          <div className="mb-5 px-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50">
+            <p className="text-zinc-600 dark:text-zinc-400 text-xs leading-relaxed">
+              {result.advertencia}
+            </p>
+          </div>
+        )}
 
         <div className="space-y-4 mb-6">
           {result.items.map((item, i) => (
             <div key={i}>
               <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{item.emoji}</span>
-                  <span className="text-gray-700 dark:text-white/80 text-sm font-medium">{item.activo}</span>
-                </div>
-                <span className="text-emerald-500 dark:text-emerald-400 font-semibold text-sm">{item.porcentaje}%</span>
+                <span className="text-zinc-800 dark:text-zinc-200 text-sm font-medium">
+                  {item.activo}
+                </span>
+                <span className="text-zinc-900 dark:text-white font-semibold text-sm tabular-nums">
+                  {item.porcentaje}%
+                </span>
               </div>
-              <div className="h-2 w-full rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+              <div className="h-1 w-full rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
                 <div
-                  className="h-full rounded-full transition-all duration-700 ease-out"
-                  style={{ width: `${item.porcentaje}%`, background: "linear-gradient(90deg, #00c896, #00e6aa)" }}
+                  className="h-full rounded-full bg-emerald-500 transition-all duration-700 ease-out"
+                  style={{ width: `${item.porcentaje}%` }}
                 />
               </div>
-              <p className="text-gray-400 dark:text-white/40 text-xs mt-1.5">{item.descripcion}</p>
+              <p className="text-zinc-500 dark:text-zinc-500 text-xs mt-1.5 leading-relaxed">
+                {item.descripcion}
+              </p>
             </div>
           ))}
         </div>
 
-        {/* Uses left badge */}
         {remaining > 0 && (
-          <p className="text-center text-gray-400 dark:text-white/30 text-xs mb-4">
-            {remaining === 1 ? (
-              <>Te queda <span className="text-gray-500 dark:text-white/50 font-medium">1 consulta</span></>
-            ) : (
-              <>Te quedan <span className="text-gray-500 dark:text-white/50 font-medium">{remaining} consultas</span></>
-            )}
-            {ttl > 0 && (
-              <span className="text-gray-300 dark:text-white/20"> · se renueva a las {getRenewalTime(ttl)}</span>
-            )}
+          <p className="text-center text-zinc-400 dark:text-zinc-600 text-xs mb-4">
+            {remaining === 1 ? "Te queda 1 consulta" : `Te quedan ${remaining} consultas`}
+            {ttl > 0 && <> · se renueva a las {getRenewalTime(ttl)}</>}
           </p>
         )}
 
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <button
+            type="button"
             onClick={handleReset}
             disabled={remaining === 0}
-            className="flex-1 py-3 rounded-xl border border-black/10 dark:border-white/10 text-gray-600 dark:text-white/70 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/5 hover:border-black/20 dark:hover:border-white/20 transition-all active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex-1 py-3 rounded-lg border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            ← Calcular de nuevo
+            Calcular de nuevo
           </button>
           <button
+            type="button"
             onClick={() => downloadPDF(result, amount, currency, riskProfile!)}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-400/10 border border-emerald-400/20 text-emerald-600 dark:text-emerald-400 text-sm font-medium hover:bg-emerald-400/20 transition-all active:scale-[0.97]"
+            className="inline-flex items-center gap-2 px-4 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white text-sm font-medium transition-colors"
           >
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-              <path d="M7.5 1v9m0 0L4.5 7m3 3L10.5 7M2 13h11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Descargar PDF
+            <Download size={14} strokeWidth={2} />
+            PDF
           </button>
         </div>
       </div>
     );
   }
 
-  // Wizard
   return (
-    <div className="rounded-2xl border border-black/[0.07] dark:border-white/5 bg-black/[0.03] dark:bg-white/[0.03] p-6">
-      {/* Uses indicator */}
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex gap-2">
-          {[1, 2].map((s) => (
-            <div
-              key={s}
-              className={`h-1 w-10 rounded-full transition-all duration-300 ${s <= step ? "bg-emerald-400" : "bg-black/10 dark:bg-white/10"}`}
-            />
-          ))}
-        </div>
-        <div className="flex items-center gap-1.5">
-          {Array.from({ length: FREE_LIMIT }).map((_, i) => (
-            <span
-              key={i}
-              className={`w-2 h-2 rounded-full transition-all ${i < uses ? "bg-black/15 dark:bg-white/15" : "bg-emerald-400/70"}`}
-            />
-          ))}
-          <span className="text-gray-400 dark:text-white/30 text-xs ml-1">
-            {remaining === 1 ? "Te queda 1 consulta" : `Te quedan ${remaining}`}
-            {ttl > 0 && (
-              <span className="text-gray-300 dark:text-white/20">
-                {" · "}renueva a las {getRenewalTime(ttl)}
-              </span>
-            )}
-          </span>
-        </div>
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <StepDots step={step} />
+        <span className="text-zinc-400 dark:text-zinc-600 text-xs tabular-nums">
+          {remaining === 1 ? "1 consulta" : `${remaining} consultas`}
+          {ttl > 0 && (
+            <span className="text-zinc-300 dark:text-zinc-700">
+              {" "}
+              · {getRenewalTime(ttl)}
+            </span>
+          )}
+        </span>
       </div>
 
       {step === 1 && (
         <form onSubmit={handleAmountSubmit}>
-          <h3 className="text-gray-800 dark:text-white/90 font-semibold text-lg mb-1">¿Cuánto tenés para invertir?</h3>
-          <p className="text-gray-400 dark:text-white/40 text-sm mb-5">Ingresá el monto y la moneda</p>
+          <h3 className="text-zinc-900 dark:text-white font-semibold text-base mb-1">
+            ¿Cuánto tenés para invertir?
+          </h3>
+          <p className="text-zinc-500 dark:text-zinc-500 text-sm mb-5">
+            Elegí moneda e ingresá el monto
+          </p>
 
-          <div className="flex gap-2 mb-4">
-            {(["ARS", "USD"] as Currency[]).map((c) => (
+          <div className="grid grid-cols-2 gap-px mb-4 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-200 dark:bg-zinc-800">
+            {(
+              [
+                { id: "ARS" as Currency, label: "Pesos", code: "ARS" },
+                { id: "USD" as Currency, label: "Dólares", code: "USD" },
+              ] as const
+            ).map((c) => (
               <button
-                key={c}
+                key={c.id}
                 type="button"
-                onClick={() => setCurrency(c)}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all active:scale-95 ${currency === c ? "bg-emerald-400 text-black" : "bg-black/5 dark:bg-white/5 text-gray-500 dark:text-white/50 hover:bg-black/10 dark:hover:bg-white/10"}`}
+                onClick={() => setCurrency(c.id)}
+                className={`py-2.5 text-sm font-medium transition-colors ${
+                  currency === c.id
+                    ? "bg-emerald-600 dark:bg-emerald-500 text-white"
+                    : "bg-white dark:bg-zinc-950 text-zinc-500 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300"
+                }`}
               >
-                {c === "ARS" ? "🇦🇷 Pesos" : "🇺🇸 Dólares"}
+                <span className="block leading-tight">{c.label}</span>
+                <span
+                  className={`block text-[10px] font-normal tracking-wider mt-0.5 ${
+                    currency === c.id
+                      ? "text-white/70"
+                      : "text-zinc-400 dark:text-zinc-600"
+                  }`}
+                >
+                  {c.code}
+                </span>
               </button>
             ))}
           </div>
 
           <div className="relative mb-5">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/40 text-lg font-medium">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-600 text-sm font-medium tabular-nums">
               {currency === "ARS" ? "$" : "USD"}
             </span>
             <input
@@ -348,67 +364,98 @@ export function Recomendador() {
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0"
               min="1"
-              className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl pl-14 pr-4 py-4 text-gray-800 dark:text-white text-xl font-semibold placeholder-gray-300 dark:placeholder-white/20 focus:outline-none focus:border-emerald-500/50 dark:focus:border-emerald-400/50 transition-colors"
+              className="w-full bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-lg pl-12 pr-4 py-3.5 text-zinc-900 dark:text-white text-xl font-semibold tabular-nums placeholder-zinc-300 dark:placeholder-zinc-700 focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 transition-colors"
             />
           </div>
 
           <button
             type="submit"
             disabled={!amount || Number(amount) <= 0}
-            className="w-full py-4 rounded-xl bg-emerald-400 text-black font-bold text-base hover:bg-emerald-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-[0.97]"
+            className="w-full py-3.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white font-semibold text-sm disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
-            Continuar →
+            Continuar
           </button>
         </form>
       )}
 
       {step === 2 && (
         <div>
-          <h3 className="text-gray-800 dark:text-white/90 font-semibold text-lg mb-1">¿Cuál es tu perfil?</h3>
-          <p className="text-gray-400 dark:text-white/40 text-sm mb-5">
-            {currency === "ARS" ? "$" : "USD"} {Number(amount).toLocaleString("es-AR")} {currency}
+          <h3 className="text-zinc-900 dark:text-white font-semibold text-base mb-1">
+            ¿Cuál es tu perfil?
+          </h3>
+          <p className="text-zinc-500 dark:text-zinc-500 text-sm mb-5 tabular-nums">
+            {currency === "ARS" ? "$" : "USD"} {Number(amount).toLocaleString("es-AR")}
           </p>
 
-          <div className="space-y-3 mb-5">
-            {PROFILES.map((profile) => (
-              <button
-                key={profile.id}
-                onClick={() => setRiskProfile(profile.id)}
-                className={`w-full text-left p-4 rounded-xl border transition-all active:scale-[0.98] ${riskProfile === profile.id ? "border-emerald-400/50 bg-emerald-400/10" : "border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] hover:bg-black/[0.05] dark:hover:bg-white/[0.05]"}`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{profile.emoji}</span>
-                  <div>
-                    <p className="text-gray-800 dark:text-white/90 text-sm font-medium">{profile.label}</p>
-                    <p className="text-gray-400 dark:text-white/40 text-xs">{profile.sublabel}</p>
+          <div className="space-y-2 mb-5">
+            {PROFILES.map((profile) => {
+              const selected = riskProfile === profile.id;
+              return (
+                <button
+                  key={profile.id}
+                  type="button"
+                  onClick={() => setRiskProfile(profile.id)}
+                  className={`w-full text-left px-4 py-3.5 rounded-lg border transition-colors ${
+                    selected
+                      ? "border-emerald-500 bg-emerald-50/60 dark:bg-emerald-500/10"
+                      : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`flex-shrink-0 w-4 h-4 rounded-full border flex items-center justify-center ${
+                        selected
+                          ? "border-emerald-500 bg-emerald-500"
+                          : "border-zinc-300 dark:border-zinc-600"
+                      }`}
+                    >
+                      {selected && (
+                        <Check
+                          size={10}
+                          strokeWidth={3}
+                          className="text-white"
+                        />
+                      )}
+                    </span>
+                    <div>
+                      <p className="text-zinc-900 dark:text-white text-sm font-medium">
+                        {profile.label}
+                      </p>
+                      <p className="text-zinc-500 dark:text-zinc-500 text-xs mt-0.5">
+                        {profile.sublabel}
+                      </p>
+                    </div>
                   </div>
-                  {riskProfile === profile.id && <span className="ml-auto text-emerald-500 dark:text-emerald-400">✓</span>}
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
 
-          {error && <p className="text-red-500 dark:text-red-400 text-sm mb-3">{error}</p>}
+          {error && (
+            <p className="text-zinc-700 dark:text-zinc-300 text-sm mb-3">{error}</p>
+          )}
 
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <button
+              type="button"
               onClick={() => setStep(1)}
-              className="py-4 px-5 rounded-xl border border-black/10 dark:border-white/10 text-gray-500 dark:text-white/50 hover:text-gray-700 dark:hover:text-white/80 hover:border-black/20 dark:hover:border-white/20 transition-all text-sm"
+              className="py-3.5 px-4 rounded-lg border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white text-sm font-medium transition-colors"
             >
-              ← Volver
+              Volver
             </button>
             <button
+              type="button"
               onClick={handleGetRecomendacion}
               disabled={!riskProfile || loading}
-              className="flex-1 py-4 rounded-xl bg-emerald-400 text-black font-bold text-base hover:bg-emerald-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-[0.97]"
+              className="flex-1 py-3.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white font-semibold text-sm disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                  Analizando...
+                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Analizando…
                 </span>
               ) : (
-                "Ver mi recomendación ✨"
+                "Ver recomendación"
               )}
             </button>
           </div>
