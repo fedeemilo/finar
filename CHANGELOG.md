@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.5] — 2026-07-18
+
+### Mejorado
+- **SemaforoStrip**: al abrir "Ver detalle", scroll suave hasta el contenido expandido.
+
+---
+
 ## [0.2.4] — 2026-07-18
 
 ### Cambiado

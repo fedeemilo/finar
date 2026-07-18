@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, Archive } from "lucide-react";
 import { Semaforo, type HistoricoData } from "@/components/Semaforo";
@@ -31,6 +31,15 @@ export function SemaforoStrip({
   historiales?: Record<string, number[]>;
 }) {
   const [open, setOpen] = useState(false);
+  const detailRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const id = window.requestAnimationFrame(() => {
+      detailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [open]);
 
   if (!analisis || analisis.activos.length === 0) {
     return (
@@ -99,7 +108,7 @@ export function SemaforoStrip({
       </button>
 
       {open && (
-        <div className="mt-6 pt-2">
+        <div ref={detailRef} className="mt-6 pt-2 scroll-mt-20">
           <Semaforo analisis={analisis} historico={historico} historiales={historiales} />
         </div>
       )}
