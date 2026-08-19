@@ -51,7 +51,7 @@ export function NoticiasArchivoChips({
                 <Link
                   key={fecha}
                   href={`${archiveBase}/${fecha}`}
-                  className={`text-[11px] font-medium text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/60 ${accent} px-2.5 py-1 rounded-full transition-colors capitalize`}
+                  className={`text-[11px] font-medium text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/60 ${accent} px-3 py-1.5 rounded-full transition-colors capitalize`}
                 >
                   {fechaChipLabel(fecha)}
                 </Link>

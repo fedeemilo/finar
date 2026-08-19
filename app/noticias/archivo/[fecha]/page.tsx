@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: { fecha: string } }
   const fechaLegible = fechaLegibleArg(params.fecha);
   return {
     title: `FinAR · Noticias del ${fechaLegible}`,
-    description: `Resumen periodístico argentino del ${fechaLegible}: top 3 noticias, tendencias del día y conclusión.`,
+    description: `Noticias argentinas del ${fechaLegible}, resumidas por IA.`,
   };
 }
 

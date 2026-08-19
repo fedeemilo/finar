@@ -1,10 +1,7 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
 import {
   ArrowLeft,
   ExternalLink,
-  Zap,
-  Sparkles,
   Newspaper,
   Code2,
   Clock,
@@ -16,9 +13,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { FinarBrand } from "@/components/FinarBrand";
 import { NoticiasTabNav } from "@/components/NoticiasTabNav";
 import { NoticiasArchivoChips } from "@/components/NoticiasArchivoChips";
-import { NoticiasSectionNav } from "@/components/NoticiasSectionNav";
-import { NoticiasResumenCollapsible } from "@/components/NoticiasResumenCollapsible";
-import { TendenciaTexto } from "@/components/TendenciaTexto";
+import { NoticiaResumen, ResumenExclusiveProvider } from "@/components/NoticiaResumen";
 import { fechaLegibleArg } from "@/lib/dates";
 
 interface NoticiaItem {
@@ -65,10 +60,10 @@ function noticiaFuente(noticia: NoticiaItem): string {
 
 export interface NoticiasData {
   fecha: string;
-  resumen: string;
   top3: NoticiaItem[];
-  tendencias: string[];
-  conclusion: string;
+  resumen?: string;
+  tendencias?: string[];
+  conclusion?: string;
 }
 
 type Variant = "general" | "tech";
@@ -78,22 +73,14 @@ interface VariantMeta {
   liveTitle: string;
   archiveTitle: string;
   sources: string;
-  sourcesCredits: string;
   emptyHora: string;
   emptyIcon: LucideIcon;
   emptyTitle: string;
-  // Tailwind classes específicas por variante
-  badgeBg: string;          // bg de la badge de fuente en hero
-  cardSourceText: string;   // texto fuente en cards secundarias
-  cardTitleHover: string;   // hover de título en cards secundarias
-  heroTitleHover: string;   // hover de título en hero
-  zapColor: string;         // color del icono Zap
-  emptyAccent: string;      // color del link "Volver al inicio" en EmptyState
-  analysisAccent: string;   // acento sección análisis
-  resumenCard: string;      // fondo/borde card resumen
-  trendBadge: string;       // pill numerada en tendencias
-  conclusionBorder: string; // borde lateral conclusión
-  sectionNavHover: string;  // hover mini-nav secciones
+  badgeBg: string;
+  cardSourceText: string;
+  cardTitleHover: string;
+  heroTitleHover: string;
+  emptyAccent: string;
 }
 
 const VARIANTS: Record<Variant, VariantMeta> = {
@@ -101,8 +88,7 @@ const VARIANTS: Record<Variant, VariantMeta> = {
     liveHref: "/",
     liveTitle: "El día en noticias",
     archiveTitle: "El día en noticias",
-    sources: "LN · Ámbito · BBC · Perfil · Clarín",
-    sourcesCredits: "La Nación, Ámbito Financiero, BBC Mundo, Perfil y Clarín",
+    sources: "LN · Ámbito · Cronista · Infobae · Clarín · BBC",
     emptyHora: "9am",
     emptyIcon: Newspaper,
     emptyTitle: "Todavía no hay noticias hoy",
@@ -110,20 +96,13 @@ const VARIANTS: Record<Variant, VariantMeta> = {
     cardSourceText: "text-emerald-600 dark:text-emerald-400",
     cardTitleHover: "group-hover:text-emerald-700 dark:group-hover:text-emerald-300",
     heroTitleHover: "group-hover:text-emerald-300",
-    zapColor: "text-emerald-400",
     emptyAccent: "text-emerald-600 dark:text-emerald-400",
-    analysisAccent: "text-emerald-600 dark:text-emerald-400",
-    resumenCard: "border-zinc-200 dark:border-zinc-800",
-    trendBadge: "text-emerald-600 dark:text-emerald-400",
-    conclusionBorder: "border-emerald-500",
-    sectionNavHover: "hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/10",
   },
   tech: {
     liveHref: "/?tab=tech",
     liveTitle: "Tech del día",
     archiveTitle: "Tech del día",
-    sources: "HN · dev.to · GitHub · Next.js · TechCrunch",
-    sourcesCredits: "Hacker News, dev.to, GitHub Blog, Next.js y TechCrunch",
+    sources: "HN · The Verge · Ars · TechCrunch · GitHub",
     emptyHora: "9:30am",
     emptyIcon: Code2,
     emptyTitle: "Todavía no hay noticias tech hoy",
@@ -131,15 +110,76 @@ const VARIANTS: Record<Variant, VariantMeta> = {
     cardSourceText: "text-indigo-600 dark:text-indigo-400",
     cardTitleHover: "group-hover:text-indigo-700 dark:group-hover:text-indigo-300",
     heroTitleHover: "group-hover:text-indigo-300",
-    zapColor: "text-indigo-400",
     emptyAccent: "text-indigo-600 dark:text-indigo-400",
-    analysisAccent: "text-indigo-600 dark:text-indigo-400",
-    resumenCard: "border-zinc-200 dark:border-zinc-800",
-    trendBadge: "text-indigo-600 dark:text-indigo-400",
-    conclusionBorder: "border-indigo-500",
-    sectionNavHover: "hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-500/10",
   },
 };
+
+function SecondaryNote({
+  noticia,
+  meta,
+  dense = false,
+}: {
+  noticia: NoticiaItem;
+  meta: VariantMeta;
+  dense?: boolean;
+}) {
+  const fuente = noticiaFuente(noticia);
+
+  return (
+    <article
+      className={`group flex h-full ${dense ? "flex-col sm:flex-row gap-4" : "flex-col"}`}
+    >
+      <a
+        href={noticia.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex-shrink-0 ${
+          dense ? "h-44 sm:h-auto sm:w-[42%] sm:min-h-[148px]" : "h-52 mb-4"
+        }`}
+      >
+        <div className="w-full h-full transition-transform duration-300 group-hover:scale-[1.03]">
+          <NoticiaImagenFallback
+            imagen={noticia.imagen}
+            titulo={noticia.titulo}
+            fuente={fuente}
+          />
+        </div>
+      </a>
+      <div className="flex flex-col min-w-0 flex-1">
+        <span
+          className={`text-[10px] font-bold tracking-widest uppercase ${meta.cardSourceText} mb-1.5`}
+        >
+          {fuente}
+        </span>
+        <a href={noticia.url} target="_blank" rel="noopener noreferrer">
+          <h3
+            className={`text-zinc-900 dark:text-white font-bold leading-snug mb-2 ${
+              dense ? "text-base sm:text-lg" : "text-xl"
+            } ${meta.cardTitleHover} transition-colors duration-200`}
+          >
+            {noticia.titulo}
+          </h3>
+        </a>
+        <div className="flex-1">
+          <NoticiaResumen
+            texto={noticia.descripcion}
+            tone="card"
+            clamp="line-clamp-3"
+          />
+        </div>
+        <a
+          href={noticia.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 mt-3 text-zinc-500 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 text-xs self-start"
+        >
+          <ExternalLink size={11} />
+          <span>Leer nota completa</span>
+        </a>
+      </div>
+    </article>
+  );
+}
 
 export function NoticiasDiariasLayout({
   data,
@@ -147,16 +187,12 @@ export function NoticiasDiariasLayout({
   archivoFecha,
   fechasDisponibles,
   homeMode = false,
-  headerActions,
-  mercadoSlot,
 }: {
   data: NoticiasData | null;
   variant: Variant;
   archivoFecha?: string;
   fechasDisponibles?: string[];
   homeMode?: boolean;
-  headerActions?: ReactNode;
-  mercadoSlot?: ReactNode;
 }) {
   const meta = VARIANTS[variant];
   const isArchivo = !!archivoFecha;
@@ -199,29 +235,22 @@ export function NoticiasDiariasLayout({
         <div className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
             <FinarBrand />
-            <div className="flex items-center gap-2 sm:gap-3">
-              {headerActions}
-              <ThemeToggle />
-            </div>
+            <ThemeToggle />
           </div>
         </div>
         <NoticiasTabNav active={variant} />
         {emptyBody}
-        {mercadoSlot && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-12 border-t border-zinc-200 dark:border-zinc-800 pt-8">
-            {mercadoSlot}
-          </div>
-        )}
       </div>
     );
   }
 
-  const [hero, ...secondary] = data.top3;
+  const [hero, ...rest] = data.top3;
+  const rail = rest.slice(0, 2);
+  const bottom = rest.slice(2);
   const fechaLegible = fechaLegibleArg(data.fecha);
 
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950">
-      {/* ── Top nav ── */}
       <div className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           {homeMode ? (
@@ -247,16 +276,13 @@ export function NoticiasDiariasLayout({
                 <span>Actualizado {meta.emptyHora}</span>
               </div>
             )}
-            {headerActions}
             <ThemeToggle />
           </div>
         </div>
       </div>
 
-      {/* ── Tab nav ── */}
       <NoticiasTabNav active={variant} />
 
-      {/* ── Chips de días disponibles (live + archivo) ── */}
       {fechasDisponibles && fechasDisponibles.length > 0 && (
         <NoticiasArchivoChips
           fechas={fechasDisponibles}
@@ -265,7 +291,6 @@ export function NoticiasDiariasLayout({
         />
       )}
 
-      {/* ── Masthead editorial ── */}
       <div className="border-b-[3px] border-zinc-900 dark:border-white bg-white dark:bg-zinc-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex items-end justify-between gap-4">
           <div>
@@ -275,31 +300,39 @@ export function NoticiasDiariasLayout({
             <p className="text-zinc-500 dark:text-zinc-500 text-sm mt-2 capitalize">{fechaLegible}</p>
           </div>
           <div className="hidden sm:block text-right text-xs text-zinc-500 dark:text-zinc-500 leading-relaxed flex-shrink-0">
-            <p className="font-medium text-zinc-700 dark:text-zinc-300">5 fuentes · Análisis IA</p>
+            <p className="font-medium text-zinc-700 dark:text-zinc-300">
+              {data.top3.length} {data.top3.length === 1 ? "nota" : "notas"} · Curado por IA
+            </p>
             <p>{meta.sources}</p>
           </div>
         </div>
       </div>
 
-      <NoticiasSectionNav
-        accentHover={meta.sectionNavHover}
-        showMercado={!!mercadoSlot}
-      />
-
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* ── NOTAS DEL DÍA ── */}
-        <div id="notas" className="scroll-mt-14">
-        <section className="mb-10">
-          <div className="relative overflow-hidden bg-zinc-800 min-h-[340px] sm:min-h-[460px]">
-            <div className="absolute inset-0">
+        <ResumenExclusiveProvider>
+        <section
+          className={
+            rail.length > 0
+              ? "grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-2 gap-6 lg:gap-8 mb-10"
+              : "mb-10"
+          }
+        >
+          <article
+            className={
+              rail.length > 0
+                ? "relative bg-zinc-800 min-h-[340px] sm:min-h-[420px] lg:min-h-0 lg:col-span-7 lg:row-span-2"
+                : "relative bg-zinc-800 min-h-[340px] sm:min-h-[460px]"
+            }
+          >
+            <div className="absolute inset-0 overflow-hidden">
               <NoticiaImagenFallback
                 imagen={hero.imagen}
                 titulo={hero.titulo}
                 fuente={noticiaFuente(hero)}
               />
             </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/15" />
-            <div className="relative z-10 flex flex-col justify-end p-6 sm:p-10 min-h-[340px] sm:min-h-[460px]">
+            <div className="absolute inset-0 overflow-hidden bg-gradient-to-t from-black/95 via-black/60 to-black/15" />
+            <div className="relative z-10 flex flex-col justify-end p-6 sm:p-8 min-h-[340px] h-full">
               <span
                 className={`inline-block self-start ${meta.badgeBg} text-white text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 mb-4`}
               >
@@ -312,14 +345,16 @@ export function NoticiasDiariasLayout({
                 className="group max-w-4xl"
               >
                 <h2
-                  className={`text-white text-2xl sm:text-4xl font-black leading-tight mb-3 ${meta.heroTitleHover} transition-colors duration-200`}
+                  className={`text-white text-2xl sm:text-3xl lg:text-[2.15rem] font-black leading-tight mb-3 ${meta.heroTitleHover} transition-colors duration-200`}
                 >
                   {hero.titulo}
                 </h2>
               </a>
-              <p className="text-white/80 text-sm sm:text-base leading-relaxed max-w-3xl">
-                {hero.descripcion}
-              </p>
+              <NoticiaResumen
+                texto={hero.descripcion}
+                tone="hero"
+                clamp="line-clamp-4"
+              />
               <a
                 href={hero.url}
                 target="_blank"
@@ -330,139 +365,30 @@ export function NoticiasDiariasLayout({
                 <span>Leer nota completa</span>
               </a>
             </div>
-          </div>
-        </section>
+          </article>
 
-        {/* ── NOTICIAS SECUNDARIAS ── */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 gap-8 pb-10 mb-10 border-b border-zinc-200 dark:border-zinc-800">
-          {secondary.map((noticia, i) => (
-            <a
-              key={i}
-              href={noticia.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex flex-col"
-            >
-              <div className="h-52 overflow-hidden bg-zinc-100 dark:bg-zinc-800 mb-4 flex-shrink-0">
-                <div className="w-full h-full transition-transform duration-300 group-hover:scale-[1.03]">
-                  <NoticiaImagenFallback
-                    imagen={noticia.imagen}
-                    titulo={noticia.titulo}
-                    fuente={noticiaFuente(noticia)}
-                  />
-                </div>
-              </div>
-              <span
-                className={`text-[10px] font-bold tracking-widest uppercase ${meta.cardSourceText} mb-2`}
-              >
-                {noticiaFuente(noticia)}
-              </span>
-              <h3
-                className={`text-zinc-900 dark:text-white font-bold text-xl leading-snug mb-3 ${meta.cardTitleHover} transition-colors duration-200`}
-              >
-                {noticia.titulo}
-              </h3>
-              <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed flex-1">
-                {noticia.descripcion}
-              </p>
-              <div className="flex items-center gap-1.5 mt-4 text-zinc-500 dark:text-zinc-500 text-xs">
-                <ExternalLink size={11} />
-                <span>Leer nota completa</span>
-              </div>
-            </a>
+          {rail.map((noticia, i) => (
+            <div key={i} className="lg:col-span-5">
+              <SecondaryNote noticia={noticia} meta={meta} dense />
+            </div>
           ))}
         </section>
-        </div>
 
-        {/* ── ANÁLISIS IA ── */}
-        <div className="scroll-mt-14 pt-2 pb-6">
-          <div className="mb-8">
-            <div className={`inline-flex items-center gap-2 ${meta.analysisAccent} mb-1.5`}>
-              <Sparkles size={14} strokeWidth={2} />
-              <span className="text-[11px] font-semibold tracking-[0.14em] uppercase">
-                Análisis del día
-              </span>
-            </div>
-            <p className="text-zinc-500 dark:text-zinc-500 text-sm max-w-xl leading-relaxed">
-              Qué significa el panorama y qué conviene tener en cuenta.
-            </p>
-          </div>
-
-          <section
-            id="analisis"
-            className="scroll-mt-14 grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10 mb-10"
-          >
-            <div className="order-1 lg:col-span-2 lg:row-start-1">
-              <h2 className="text-[11px] font-semibold tracking-[0.14em] uppercase text-zinc-400 dark:text-zinc-600 mb-3">
-                En una mirada
-              </h2>
-              <div className={`border-t pt-4 ${meta.resumenCard}`}>
-                <NoticiasResumenCollapsible
-                  text={data.resumen}
-                  accentClass={meta.analysisAccent}
-                />
-              </div>
-            </div>
-
-            <div className="order-2 lg:col-start-3 lg:row-start-1">
-              <div className={`border-l-2 ${meta.conclusionBorder} pl-5 lg:sticky lg:top-24`}>
-                <div className="flex items-center gap-2 mb-3">
-                  <Zap size={14} className={meta.zapColor} strokeWidth={2} />
-                  <h2 className="text-[11px] font-semibold tracking-[0.14em] uppercase text-zinc-400 dark:text-zinc-500">
-                    Lo esencial
-                  </h2>
-                </div>
-                <p className="text-zinc-900 dark:text-white font-medium text-[15px] leading-relaxed">
-                  {data.conclusion}
-                </p>
-              </div>
-              <div className="mt-6 pl-5 space-y-1.5 hidden lg:block">
-                <p className="text-zinc-400 dark:text-zinc-600 text-xs leading-relaxed">
-                  Claude Opus · {meta.sourcesCredits}
-                </p>
-                <p className="text-zinc-400 dark:text-zinc-700 text-xs leading-relaxed">
-                  Análisis IA — puede contener errores.
-                </p>
-              </div>
-            </div>
+        {bottom.length > 0 && (
+          <section className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-2 pb-4">
+            {bottom.map((noticia, i) => (
+              <SecondaryNote key={i} noticia={noticia} meta={meta} />
+            ))}
           </section>
-
-          <div id="patrones" className="scroll-mt-14">
-            <h2 className="text-[11px] font-semibold tracking-[0.14em] uppercase text-zinc-400 dark:text-zinc-600 mb-5">
-              Patrones del día
-            </h2>
-            <div className="divide-y divide-zinc-200 dark:divide-zinc-800 border-t border-zinc-200 dark:border-zinc-800">
-              {data.tendencias.map((tendencia, i) => (
-                <div key={i} className="flex gap-4 items-start py-5">
-                  <span
-                    className={`flex-shrink-0 w-6 text-sm font-semibold tabular-nums ${meta.trendBadge}`}
-                  >
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <TendenciaTexto texto={tendencia} />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <p className="text-zinc-400 dark:text-zinc-600 text-xs leading-relaxed text-center lg:hidden pt-6">
-            Claude Opus · {meta.sourcesCredits}. Análisis IA — puede contener errores.
-          </p>
-        </div>
-
-        {mercadoSlot && (
-          <div className="border-t border-zinc-200 dark:border-zinc-800 pt-10 mb-6">
-            {mercadoSlot}
-          </div>
         )}
+        </ResumenExclusiveProvider>
       </main>
 
-      {/* ── Footer ── */}
-      <div className="border-t-[3px] border-zinc-900 dark:border-white">
+      <div className="border-t-[3px] border-zinc-900 dark:border-white mt-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           {homeMode ? (
             <p className="text-zinc-500 dark:text-zinc-500 text-xs text-center sm:text-left">
-              FinAR no es asesoramiento financiero formal. Análisis generado por IA.
+              Resúmenes generados por IA. Las notas originales son de cada medio.
             </p>
           ) : (
             <Link

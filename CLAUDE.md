@@ -2,7 +2,7 @@
 
 ## Qué es este proyecto
 
-FinAR es un asesor financiero para argentinos. Responde "¿En qué me conviene invertir hoy?" usando Claude como analista de mercado real, cotizaciones en tiempo real y noticias económicas.
+FinAR es un portal de noticias para argentinos. Curaduría IA (General y Tech): resumen + imagen, y salida al medio original.
 
 URL producción: https://finar.fedmilo.com
 Repo: https://github.com/fedeemilo/finar
@@ -28,7 +28,7 @@ Repo: https://github.com/fedeemilo/finar
 
 ```
 app/
-  page.tsx                          — Home unificada editorial (diarias/tech + semáforo strip + Invertir modal)
+  page.tsx                          — Home editorial (diarias/tech, sin semáforo ni Invertir)
   layout.tsx                        — Font, TooltipProvider, Analytics, FOUC prevention script
   globals.css                       — Variables CSS dark/light theme, sin @import shadcn
   admin/page.tsx                    — Dashboard de uso (protegido por ?key=)
@@ -161,36 +161,22 @@ Ruta: `/admin?key={ADMIN_SECRET}`
 - Fondo de cards en light mode: `bg-white/80` (NO `bg-black/[0.04]` — es invisible sobre fondo crema)
 - Bordes en light mode: `border-black/[0.12]` (NO `border-black/[0.07]` — muy sutil)
 
-### Home unificada (v0.2.4+)
-`/` es el portal editorial (`max-w-7xl`), no el dashboard estrecho anterior.
+### Home unificada (v0.3.0+)
+`/` es el portal editorial (`max-w-7xl`).
 
 1. Lee Redis `noticias:diarias` o `noticias:tech` según `?tab=tech`
-2. Carga análisis (`analisis:semaforo`) para el strip de mercado
-3. Renderiza `<NoticiasDiariasLayout homeMode ... mercadoSlot={<SemaforoStrip />} headerActions={<InvertirModal />} />`
+2. Renderiza `<NoticiasDiariasLayout homeMode />` — hero + riel + notas inferiores. Sin semáforo ni recomendador.
 
 - Tabs: General → `/`, Tech → `/?tab=tech`
 - `/noticias` y `/noticias/tech` solo redirigen a la home
-- Recomendador vive en modal (no en el scroll)
-- Semáforo: strip compacto debajo del análisis; detalle al expandir
 - `force-dynamic` en page.tsx
-- Pipeline `noticias:processed` ya no se muestra en UI (puede seguir en Redis/cron)
+- Resumen largo: `NoticiaResumen` (hover/tap «Ver resumen», un panel a la vez)
+- Pipeline `noticias:processed` y `analisis:semaforo` ya no se muestran en el home
 
 ### Stale-while-revalidate (análisis + noticias)
-Mismo patrón para los 2 endpoints del home:
-
-| | Análisis | Noticias |
-|---|---|---|
-| Fresh key | `analisis:semaforo` | `noticias:processed` |
-| Fresh TTL | 30 min | 1 h |
-| Stale key | `analisis:semaforo:stale` | `noticias:processed:stale` |
-| Stale TTL | 4 h | 6 h |
-| Revalidate endpoint | `/api/analisis/revalidate` | `/api/noticias/revalidate` |
-| Cron n8n | `home_analisis_refresh_n8n.json` | `home_noticias_refresh_n8n.json` |
-| Frecuencia | cada 4hs (03,07,11,15,19,23 ARG) | misma |
+Los GET `/api/analisis` y `/api/noticias` siguen el patrón stale-while-revalidate, pero **el home ya no los llama**. Los crons `home_*_refresh` están apagados.
 
 - Ambos `/revalidate` requieren `Authorization: Bearer ${CRON_SECRET}` si la env var está seteada
-- El home (`app/page.tsx`) y los GET `/api/*` siempre sirven stale instantáneamente si fresh expiró
-- El cron borra el lock `REFRESH_LOCK` tras regenerar análisis para evitar doble refresh simultáneo (noticias no tiene lock — corre rápido)
 - **NO usar `unstable_after`** — no disponible en Next.js 14.2.x
 
 ### Restricción de exports en route files de Next.js
@@ -207,8 +193,7 @@ Mismo patrón para los 2 endpoints del home:
 - **Índice archivo:** `/noticias/archivo` y `/noticias/tech/archivo` listan hasta 60 fechas (`NoticiasArchivoIndex`).
 - **Chips inline:** `NoticiasArchivoChips` muestra máx 4 fechas de los últimos 7 días (`MAX_CHIP_DAYS_AGO`) + link "Todo el archivo".
 - **Índice archivo por mes:** `ArchivoFechasPorMes` (`groupFechasByMonth` en `lib/dates.ts`).
-- **Análisis IA:** separador visual, orden mobile resumen → lo esencial → patrones, `#analisis` / `#patrones` separados. Mini-nav mobile + Mercado si hay strip.
-- **Mercado:** `SemaforoStrip` debajo del análisis en home.
+- Layout live: hero + 2 en riel + resto en grilla 2 col. El JSON puede traer 3 o 5 ítems en `top3`.
 
 **Estructura del JSON en Redis (top3):**
 ```typescript
@@ -232,7 +217,7 @@ Mismo patrón para los 2 endpoints del home:
 
 **TTL Redis:** 90000 segundos (~25h). Se sobreescribe cada ejecución del workflow (SET sin acumulación).
 
-**Diseño:** editorial estilo portal de noticias — `max-w-7xl`, hero full-width con gradient overlay, grid 2 columnas para noticias secundarias, sidebar de conclusión con bordes de 3px estilo diario.
+**Diseño:** editorial — `max-w-7xl`, hero + riel + grilla, sin sidebar de conclusión.
 
 **`NoticiaImagenFallback`** es un client component que maneja `onError` de la imagen. Fallback por degradado según fuente/categoría. **Siempre** guardar contra `fuente` undefined antes de `.toLowerCase()`.
 
@@ -240,16 +225,14 @@ Mismo patrón para los 2 endpoints del home:
 
 ### Workflows n8n
 
-Hay 4 workflows activos:
+Hay 2 workflows de noticias activos. Los de refresh del home (análisis / `noticias:processed`) están apagados.
 
 | Archivo | Qué hace | Frecuencia |
 |---|---|---|
-| `news_summary_n8n.json` | Genera `noticias:diarias` (RSS → Opus → og:image → Redis) | 09:00 + 18:00 ARG |
+| `news_summary_n8n.json` | Genera `noticias:diarias` (RSS → Claude → og:image → Redis) | 09:00 + 18:00 ARG |
 | `tech_summary_n8n.json` | Genera `noticias:tech` (mismo pipeline con feeds tech) | 09:30 + 18:30 ARG |
-| `home_analisis_refresh_n8n.json` | HTTP GET a `/api/analisis/revalidate` | cada 4hs ARG |
-| `home_noticias_refresh_n8n.json` | HTTP GET a `/api/noticias/revalidate` | cada 4hs ARG |
 
-Los 2 workflows del home son muy simples (Schedule Trigger + HTTP Request con `Authorization: Bearer ${CRON_SECRET}`). Al importar reemplazar los placeholders `REEMPLAZAR-DOMINIO` y `REEMPLAZAR_CRON_SECRET`.
+Prod corre v3 (5 notas, General suma Cronista + Infobae Economía). Los JSON del repo pueden estar desfasados.
 
 ### Workflow `news_summary_n8n.json` — pipeline detallado
 

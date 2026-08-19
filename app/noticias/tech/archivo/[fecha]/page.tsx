@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: { fecha: string } }
   const fechaLegible = fechaLegibleArg(params.fecha);
   return {
     title: `FinAR · Tech del ${fechaLegible}`,
-    description: `Resumen tech del ${fechaLegible}: top 3 noticias, tendencias y conclusión sobre desarrollo, IA, seguridad e infra.`,
+    description: `Noticias tech del ${fechaLegible}, resumidas por IA.`,
   };
 }
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0] — 2026-08-19
+
+### Cambiado
+- **FinAR NEWS**: el home deja de ser asesor financiero. Portal de noticias General / Tech, badge NEWS, sin semáforo ni «¿En qué invierto?».
+- **Layout de edición**: hero + riel de 2 notas + fila inferior (sirve para 3 o 5 notas).
+- **Resumen IA**: preview corto + «Ver resumen» (hover/tap). Un solo panel a la vez, scroll suave al abrir y al cerrar, fondo opaco.
+
+### Quitado
+- Análisis del día, patrones, mini-nav y Mercado en 30 segundos de la UI del home.
+
+---
+
 ## [0.2.6] — 2026-07-18
 
 ### Mejorado

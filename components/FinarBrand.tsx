@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-export function FinarBrand({ showBeta = true }: { showBeta?: boolean }) {
+export function FinarBrand({ showBadge = true }: { showBadge?: boolean }) {
   return (
     <div className="flex items-center gap-2">
       <div className="flex items-center">
@@ -27,9 +27,9 @@ export function FinarBrand({ showBeta = true }: { showBeta?: boolean }) {
           </span>
         </span>
       </div>
-      {showBeta && (
-        <span className="text-[10px] text-gray-500 dark:text-white/30 bg-black/[0.08] dark:bg-white/5 px-1.5 py-0.5 rounded-md font-medium">
-          BETA
+      {showBadge && (
+        <span className="text-[10px] font-bold tracking-widest uppercase text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md">
+          NEWS
         </span>
       )}
     </div>

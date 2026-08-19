@@ -11,9 +11,9 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "FinAR — ¿En qué me conviene invertir hoy?",
+  title: "FinAR — El día en noticias",
   description:
-    "Tu asesor financiero amigo. Simple, claro y en argentino. Sin jerga, sin Excel, sin vueltas.",
+    "Noticias de Argentina y tech, resumidas por IA. Entrá, leé, y saltá al medio original.",
 };
 
 export default function RootLayout({
