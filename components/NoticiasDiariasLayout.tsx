@@ -4,7 +4,6 @@ import {
   ExternalLink,
   Newspaper,
   Code2,
-  Clock,
   Archive,
   type LucideIcon,
 } from "lucide-react";
@@ -265,13 +264,11 @@ export function NoticiasDiariasLayout({
             </Link>
           )}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            {isArchivo ? (
+            {isArchivo && (
               <span className="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-widest text-amber-700 dark:text-amber-300 bg-amber-200/70 dark:bg-amber-500/15 px-2 py-0.5 rounded">
                 <Archive size={10} strokeWidth={2.5} />
                 Archivo
               </span>
-            ) : (
-              <div />
             )}
             <ThemeToggle />
           </div>
