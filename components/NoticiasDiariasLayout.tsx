@@ -271,10 +271,7 @@ export function NoticiasDiariasLayout({
                 Archivo
               </span>
             ) : (
-              <div className="hidden sm:flex items-center gap-1.5 text-zinc-500 dark:text-zinc-500 text-xs">
-                <Clock size={11} />
-                <span>Actualizado {meta.emptyHora}</span>
-              </div>
+              <div />
             )}
             <ThemeToggle />
           </div>
