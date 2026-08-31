@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1] — 2026-08-30
+
+### Agregado
+- **Actualizado real**: el nav muestra la hora ARG de la última corrida (campo `actualizadoAt` en Redis, fallback al `captured_at` de Postgres).
+
+---
+
 ## [0.3.0] — 2026-08-19
 
 ### Cambiado

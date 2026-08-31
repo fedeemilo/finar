@@ -73,6 +73,18 @@ export async function loadAvailableDates(
   return rows.map((r) => r.fecha);
 }
 
+/** Timestamp del snapshot más reciente de un kind. Fallback si Redis no trae actualizadoAt. */
+export async function loadLatestCapturedAt(kind: SnapshotKind): Promise<string | null> {
+  const { rows } = await sql<{ captured_at: string }>`
+    SELECT captured_at
+    FROM snapshots
+    WHERE kind = ${kind}
+    ORDER BY captured_at DESC
+    LIMIT 1
+  `;
+  return rows[0]?.captured_at ?? null;
+}
+
 /**
  * Trae el snapshot MÁS RECIENTE de un kind que tenga al menos `daysAgo` días de antigüedad.
  * Usado para el bloque "¿Qué decía hace una semana?" en AssetCard.

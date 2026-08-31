@@ -30,6 +30,7 @@ export default async function NoticiasTechArchivoPage({ params }: { params: { fe
       variant="tech"
       archivoFecha={params.fecha}
       fechasDisponibles={fechas}
+      actualizadoAt={snap?.payload.actualizadoAt ?? snap?.capturedAt}
     />
   );
 }

@@ -1,6 +1,6 @@
 import { NoticiasDiariasLayout, type NoticiasData } from "@/components/NoticiasDiariasLayout";
 import { getCached } from "@/lib/redis";
-import { loadAvailableDates } from "@/lib/db";
+import { loadAvailableDates, loadLatestCapturedAt } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -13,9 +13,10 @@ export default async function Home({
   const redisKey = variant === "tech" ? "noticias:tech" : "noticias:diarias";
   const archiveKind = variant === "tech" ? "noticias-tech" : "noticias-diarias";
 
-  const [data, fechas] = await Promise.all([
+  const [data, fechas, capturedAt] = await Promise.all([
     getCached<NoticiasData>(redisKey),
     loadAvailableDates(7, archiveKind).catch(() => [] as string[]),
+    loadLatestCapturedAt(archiveKind).catch(() => null),
   ]);
 
   return (
@@ -24,6 +25,7 @@ export default async function Home({
       variant={variant}
       fechasDisponibles={fechas}
       homeMode
+      actualizadoAt={data?.actualizadoAt ?? capturedAt}
     />
   );
 }

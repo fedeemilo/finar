@@ -199,6 +199,7 @@ Los GET `/api/analisis` y `/api/noticias` siguen el patrón stale-while-revalida
 ```typescript
 {
   fecha: string;
+  actualizadoAt?: string; // ISO, lo escribe n8n al reconstruir
   resumen: string;
   top3: [{
     titulo: string;

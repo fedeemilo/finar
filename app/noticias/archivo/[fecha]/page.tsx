@@ -30,6 +30,7 @@ export default async function NoticiasArchivoPage({ params }: { params: { fecha:
       variant="general"
       archivoFecha={params.fecha}
       fechasDisponibles={fechas}
+      actualizadoAt={snap?.payload.actualizadoAt ?? snap?.capturedAt}
     />
   );
 }

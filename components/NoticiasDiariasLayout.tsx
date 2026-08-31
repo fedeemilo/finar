@@ -4,6 +4,7 @@ import {
   ExternalLink,
   Newspaper,
   Code2,
+  Clock,
   Archive,
   type LucideIcon,
 } from "lucide-react";
@@ -13,7 +14,7 @@ import { FinarBrand } from "@/components/FinarBrand";
 import { NoticiasTabNav } from "@/components/NoticiasTabNav";
 import { NoticiasArchivoChips } from "@/components/NoticiasArchivoChips";
 import { NoticiaResumen, ResumenExclusiveProvider } from "@/components/NoticiaResumen";
-import { fechaLegibleArg } from "@/lib/dates";
+import { fechaLegibleArg, horaCortaArg } from "@/lib/dates";
 
 interface NoticiaItem {
   titulo: string;
@@ -60,6 +61,7 @@ function noticiaFuente(noticia: NoticiaItem): string {
 export interface NoticiasData {
   fecha: string;
   top3: NoticiaItem[];
+  actualizadoAt?: string;
   resumen?: string;
   tendencias?: string[];
   conclusion?: string;
@@ -186,12 +188,14 @@ export function NoticiasDiariasLayout({
   archivoFecha,
   fechasDisponibles,
   homeMode = false,
+  actualizadoAt,
 }: {
   data: NoticiasData | null;
   variant: Variant;
   archivoFecha?: string;
   fechasDisponibles?: string[];
   homeMode?: boolean;
+  actualizadoAt?: string | null;
 }) {
   const meta = VARIANTS[variant];
   const isArchivo = !!archivoFecha;
@@ -247,6 +251,7 @@ export function NoticiasDiariasLayout({
   const rail = rest.slice(0, 2);
   const bottom = rest.slice(2);
   const fechaLegible = fechaLegibleArg(data.fecha);
+  const horaActualizado = actualizadoAt ? horaCortaArg(actualizadoAt) : null;
 
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950">
@@ -264,11 +269,18 @@ export function NoticiasDiariasLayout({
             </Link>
           )}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            {isArchivo && (
+            {isArchivo ? (
               <span className="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-widest text-amber-700 dark:text-amber-300 bg-amber-200/70 dark:bg-amber-500/15 px-2 py-0.5 rounded">
                 <Archive size={10} strokeWidth={2.5} />
                 Archivo
               </span>
+            ) : (
+              horaActualizado && (
+                <div className="hidden sm:flex items-center gap-1.5 text-zinc-500 dark:text-zinc-500 text-xs">
+                  <Clock size={11} />
+                  <span>Actualizado {horaActualizado}</span>
+                </div>
+              )
             )}
             <ThemeToggle />
           </div>

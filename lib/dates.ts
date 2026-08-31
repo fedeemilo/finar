@@ -44,6 +44,18 @@ export function fechaChipLabel(fecha: string): string {
   });
 }
 
+/** Hora corta en ARG desde un ISO: "18:04". Null si la fecha no es válida. */
+export function horaCortaArg(iso: string): string | null {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return new Intl.DateTimeFormat("es-AR", {
+    timeZone: ARG_TZ,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(d);
+}
+
 /** Fecha legible completa: "jueves, 4 de junio de 2026". */
 export function fechaLegibleArg(fecha: string): string {
   const [y, m, d] = fecha.split("-").map(Number);

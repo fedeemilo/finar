@@ -309,7 +309,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const imageResults = $input.first().json.imageResults;\nconst data = JSON.parse(imageResults[0].dataStr);\n\nimageResults.forEach(result => {\n  if (result.ogImage) {\n    data.top3[result.scrapeIndex].imagen = result.ogImage;\n  }\n});\n\nconst payload = JSON.stringify(data);\nconst upstashBody = JSON.stringify(['SET', 'noticias:tech', payload, 'EX', '90000']);\n\n// Preparar body para BD Postgres (snapshot histórico)\nconst snapshotBody = JSON.stringify({ kind: 'noticias-tech', payload: data });\n\nreturn [{ json: { upstashBody, snapshotBody, fecha: data.fecha } }];"
+        "jsCode": "const imageResults = $input.first().json.imageResults;\nconst data = JSON.parse(imageResults[0].dataStr);\n\nimageResults.forEach(result => {\n  if (result.ogImage) {\n    data.top3[result.scrapeIndex].imagen = result.ogImage;\n  }\n});\n\ndata.actualizadoAt = new Date().toISOString();\n\nconst payload = JSON.stringify(data);\nconst upstashBody = JSON.stringify(['SET', 'noticias:tech', payload, 'EX', '90000']);\n\n// Preparar body para BD Postgres (snapshot histórico)\nconst snapshotBody = JSON.stringify({ kind: 'noticias-tech', payload: data });\n\nreturn [{ json: { upstashBody, snapshotBody, fecha: data.fecha } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
