@@ -233,7 +233,7 @@ Hay 2 workflows de noticias activos. Los de refresh del home (análisis / `notic
 | `news_summary_n8n.json` | Genera `noticias:diarias` (RSS → Claude → og:image → Redis) | 09:00 + 18:00 ARG |
 | `tech_summary_n8n.json` | Genera `noticias:tech` (mismo pipeline con feeds tech) | 09:30 + 18:30 ARG |
 
-Prod corre v3 (5 notas, General suma Cronista + Infobae Economía). Los JSON del repo pueden estar desfasados.
+Los JSON del repo son los flujos v3 de prod (5 notas; General suma Cronista + Infobae Economía). El nodo «Reconstruir con imágenes» escribe `actualizadoAt`.
 
 ### Workflow `news_summary_n8n.json` — pipeline detallado
 
