@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2] — 2026-09-02
+
+### Corregido
+- **Archivo:** el índice no mostraba días nuevos (p. ej. 2 de septiembre) aunque el snapshot existía en Postgres. Next.js cacheaba el `fetch` de `@vercel/postgres` pese a `force-dynamic`. Las lecturas de `lib/db.ts` ahora llaman `noStore()`.
+
+---
+
 ## [0.3.1] — 2026-08-30
 
 ### Agregado

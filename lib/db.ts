@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { sql } from "@vercel/postgres";
 
 export type SnapshotKind =
@@ -31,6 +32,9 @@ export async function saveCotizaciones(c: CotizacionesRow): Promise<void> {
 }
 
 // ── READS ───────────────────────────────────────────────────────────────────
+// `@vercel/postgres` usa fetch internamente. Next.js 14 cachea esos fetch
+// aunque la página tenga `force-dynamic`, así que el índice de archivo se
+// congelaba en la última query. noStore() en cada read lo evita.
 
 const ARG_TZ = "America/Argentina/Buenos_Aires";
 
@@ -42,6 +46,7 @@ export async function loadSnapshotByDate<T = unknown>(
   kind: SnapshotKind,
   fecha: string
 ): Promise<{ payload: T; capturedAt: string } | null> {
+  noStore();
   const { rows } = await sql<{ payload: T; captured_at: string }>`
     SELECT payload, captured_at
     FROM snapshots
@@ -63,6 +68,7 @@ export async function loadAvailableDates(
   limit = 7,
   kind: SnapshotKind = "analisis"
 ): Promise<string[]> {
+  noStore();
   const { rows } = await sql<{ fecha: string }>`
     SELECT DISTINCT TO_CHAR(captured_at AT TIME ZONE ${ARG_TZ}, 'YYYY-MM-DD') AS fecha
     FROM snapshots
@@ -75,6 +81,7 @@ export async function loadAvailableDates(
 
 /** Timestamp del snapshot más reciente de un kind. Fallback si Redis no trae actualizadoAt. */
 export async function loadLatestCapturedAt(kind: SnapshotKind): Promise<string | null> {
+  noStore();
   const { rows } = await sql<{ captured_at: string }>`
     SELECT captured_at
     FROM snapshots
@@ -94,6 +101,7 @@ export async function loadSnapshotHaceDias<T = unknown>(
   kind: SnapshotKind,
   daysAgo: number
 ): Promise<{ payload: T; capturedAt: string } | null> {
+  noStore();
   const { rows } = await sql<{ payload: T; captured_at: string }>`
     SELECT payload, captured_at
     FROM snapshots
@@ -112,6 +120,7 @@ export async function loadSnapshotHaceDias<T = unknown>(
 export async function loadSnapshotById<T = unknown>(
   id: number
 ): Promise<{ kind: SnapshotKind; payload: T; capturedAt: string } | null> {
+  noStore();
   const { rows } = await sql<{ kind: SnapshotKind; payload: T; captured_at: string }>`
     SELECT kind, payload, captured_at
     FROM snapshots
@@ -130,6 +139,7 @@ export async function loadSnapshotById<T = unknown>(
  * ID del análisis más reciente. Usado por el botón compartir del home.
  */
 export async function loadLatestAnalisisId(): Promise<number | null> {
+  noStore();
   const { rows } = await sql<{ id: number }>`
     SELECT id FROM snapshots
     WHERE kind = 'analisis'
@@ -155,6 +165,7 @@ export async function loadCotizacionesHistorial(
 ): Promise<number[]> {
   const allowed: CotizacionField[] = ["oficial_venta", "blue_venta", "mep_venta", "ccl_venta"];
   if (!allowed.includes(field)) return [];
+  noStore();
 
   const interval = `${days} days`;
   let rows: { v: number }[];

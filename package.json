@@ -1,6 +1,6 @@
 {
   "name": "finar",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Portal de noticias de Argentina y tech, resumidas por IA",
   "private": true,
   "scripts": {

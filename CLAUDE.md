@@ -51,6 +51,7 @@ lib/
   noticias.ts               — generarNoticias(), constantes de cache, Noticia interface (espejo de analisis.ts)
   claude.ts                 — Cliente Anthropic + SYSTEM_PROMPT
   redis.ts                  — Cliente Upstash + helpers getCached/setCache
+  db.ts                     — Snapshots Postgres; lecturas con noStore() (Next cachea el fetch de @vercel/postgres)
   cotizaciones.ts           — Fetch api.bluelytics.com.ar/v2/latest
   rss.ts                    — Fetch feeds RSS para noticias del análisis
   constants.ts              — FREE_LIMIT, LIMIT_TTL_SECONDS (safe para client+server)
@@ -191,6 +192,7 @@ Los GET `/api/analisis` y `/api/noticias` siguen el patrón stale-while-revalida
 - **Redirects:** `/noticias` → `/`, `/noticias/tech` → `/?tab=tech`.
 - **Archivo por fecha:** Postgres (`kind`: `noticias-diarias` | `noticias-tech`) → `/noticias/archivo/[fecha]` y `/noticias/tech/archivo/[fecha]`.
 - **Índice archivo:** `/noticias/archivo` y `/noticias/tech/archivo` listan hasta 60 fechas (`NoticiasArchivoIndex`).
+- **Cache Postgres:** las lecturas en `lib/db.ts` llaman `noStore()`. `force-dynamic` en la página NO alcanza: `@vercel/postgres` usa `fetch` y Next lo cachea (el índice de archivo se congelaba).
 - **Chips inline:** `NoticiasArchivoChips` muestra máx 4 fechas de los últimos 7 días (`MAX_CHIP_DAYS_AGO`) + link "Todo el archivo".
 - **Índice archivo por mes:** `ArchivoFechasPorMes` (`groupFechasByMonth` en `lib/dates.ts`).
 - Layout live: hero + 2 en riel + resto en grilla 2 col. El JSON puede traer 3 o 5 ítems en `top3`.
